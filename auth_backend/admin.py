@@ -1,6 +1,7 @@
 from django.contrib import admin
 from auth_backend.models import (
-    StructureType, Structure, User, Role)
+    StructureType, Structure, Role, Permission)
+from auth_backend.users import User
 
 
 @admin.register(User)
@@ -27,4 +28,10 @@ class StructureAdmin(admin.ModelAdmin):
 
 @admin.register(Role)
 class RoleAdmin(admin.ModelAdmin):
+    list_display = ['code', 'name']
+    filter_horizontal = ['permissions']
+
+
+@admin.register(Permission)
+class PermissionAdmin(admin.ModelAdmin):
     list_display = ['code', 'name']

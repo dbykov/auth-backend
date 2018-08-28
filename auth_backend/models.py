@@ -6,6 +6,7 @@ from mptt.fields import TreeForeignKey
 from mptt.models import MPTTModel
 
 
+
 class User(AbstractUser):
     """
     Модель пользователя системы
@@ -13,6 +14,11 @@ class User(AbstractUser):
     roles = models.ManyToManyField(
         to='Role',
         verbose_name='Роли пользователя')
+
+    def has_permission(self, code):
+        return self.__class__.objects.filter(
+            roles__permissions__code=code
+        ).exists()
 
     class Meta:
         db_table = 'users'
@@ -67,8 +73,14 @@ class Role(models.Model):
     """
     Модель пользовательских ролей
     """
-    code = models.CharField(max_length=128, verbose_name='Код роли')
-    name = models.CharField(max_length=128, verbose_name='Наименование роли')
+    code = models.CharField(
+        max_length=64, unique=True,
+        verbose_name='Код роли')
+    name = models.CharField(
+        max_length=128, verbose_name='Наименование роли')
+    permissions = models.ManyToManyField(
+        to='Permission',
+        verbose_name='Список разрешений')
 
     def __str__(self):
         return f'{self.id}: {self.name}'
@@ -77,3 +89,23 @@ class Role(models.Model):
         db_table = 'roles'
         verbose_name = 'Роль пользователя'
         verbose_name_plural = 'Роли пользователей'
+
+
+class Permission(models.Model):
+    """
+    Модель разрешения
+    """
+    code = models.CharField(
+        max_length=64, unique=True,
+        verbose_name='Код разрешения')
+    name = models.CharField(
+        max_length=128,
+        verbose_name='Наименование разрешения')
+
+    def __str__(self):
+        return f'{self.id}: {self.name} ({self.code})'
+
+    class Meta:
+        db_table = 'permissions'
+        verbose_name = 'Разрешение роли'
+        verbose_name_plural = 'Разрешения ролей'

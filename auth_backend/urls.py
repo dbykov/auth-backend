@@ -1,7 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 
-from auth_backend.auth.views import RoleViewSet
+from auth_backend.roles.views import RoleViewSet
 from auth_backend.structures.views import (
     StructureViewSet, StructureTypeViewSet)
 from auth_backend.users.views import UserViewSet
