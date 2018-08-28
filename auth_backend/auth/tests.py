@@ -6,6 +6,7 @@ __all__ = ('TestAuthentication',)
 
 refresh_token = None
 
+
 class TestAuthentication(APITestCase):
     """
     Тест кейс на авторизацию пользователя с использованием JWT
@@ -32,7 +33,7 @@ class TestAuthentication(APITestCase):
         refresh_token = payload['refresh']
 
     def test_token_refresh(self):
-        if refresh_token != None:
+        if refresh_token is not None:
             response = self.client.post('/api/auth/token/refresh/', {
                 "refresh": refresh_token,
             }, format='json')

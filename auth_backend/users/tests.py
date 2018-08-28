@@ -118,7 +118,6 @@ class TestUsersAsSuperUser(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
 
-
 class TestUsersAsRegularUser(APITestCase):
     """
     Тест кейс на работу со списком пользователей от лица обычного пользователя

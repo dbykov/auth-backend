@@ -1,5 +1,6 @@
 from django.apps import AppConfig
 
 
-class CoreConfig(AppConfig):
-    name = 'core'
+class AuthBackendConfig(AppConfig):
+    name = 'auth_backend'
+    verbose_name = 'Аутентификация'
