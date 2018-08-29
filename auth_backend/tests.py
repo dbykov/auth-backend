@@ -1,2 +1,2 @@
 from .auth.tests import *
-from .users.tests import *
+from .user.tests import *

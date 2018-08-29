@@ -1,6 +1,6 @@
 from rest_framework.serializers import ModelSerializer
 
-from auth_backend.models import Role
+from auth_backend.role.models import Role
 
 
 class RoleSerializer(ModelSerializer):

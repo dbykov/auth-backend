@@ -1,21 +1,24 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 
-from auth_backend.roles.views import RoleViewSet
-from auth_backend.structures.views import (
-    StructureViewSet, StructureTypeViewSet)
-from auth_backend.users.views import UserViewSet
+from auth_backend.permission.views import RolePermissionViewSet
+from auth_backend.role.views import RoleViewSet
+from auth_backend.organization.views import (
+    OrganizationViewSet, OrganizationTypeViewSet)
+from auth_backend.user.views import UserViewSet
 
 
 router = DefaultRouter()
 # Пользователи
 router.register('users', UserViewSet, base_name='user')
 # Структурные единицы
-router.register('structures', StructureViewSet, base_name='structure')
+router.register('organizations', OrganizationViewSet, base_name='organization')
 # Типы структурных единиц
-router.register('structure-types', StructureTypeViewSet, base_name='structure-type')  # noqa
+router.register('organization-types', OrganizationTypeViewSet, base_name='organization-type')  # noqa
 # Список пользовательских ролей
 router.register('roles', RoleViewSet, base_name='role')
+# Список разрешений
+router.register('permissions', RolePermissionViewSet, base_name='permission')
 
 
 # Общие механизмы аутентификации

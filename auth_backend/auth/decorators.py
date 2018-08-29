@@ -1,15 +1,27 @@
 from rest_framework.exceptions import PermissionDenied
 
-from auth_backend.auth.permissions import (
+from auth_backend.permission.utils import (
     PERM_ADD, PERM_VIEW, PERM_EDIT,
     PERM_DELETE, PermissionRegistry)
 
 
 class WrappedMethod:
+    """
+    Обертка для методов-экшенов в viewset
+    Сохраняет некоторую мета-информацию о методе и viewset,
+    а также человекопонятное наименование роли и действия,
+    а также кода разрешения.
+    Добавляет при вызове обернутого метода проверку на наличие прав
+    """
+    # Декорируемый метод
     callable = None
+    # Класс-viewset
     viewset = None
+    # Базовый код разрешения для данного конкретного метода
     permission_code = None
+    # Человекопонятное наименование разрешения
     verbose_name = None
+    # Признак, что указанный метод уже был декорирован
     is_wrapped = True
 
     def __init__(self, fn):
@@ -17,6 +29,9 @@ class WrappedMethod:
 
     @property
     def full_code(self):
+        """
+        Полный код разрешения
+        """
         return f'{self.viewset.name}:{self.permission_code}'
 
     def __call__(self, viewset, request):
@@ -27,6 +42,10 @@ class WrappedMethod:
 
 
 class WrappedLabel:
+    """
+    Обертка над кастомным методом-отображением
+    Добавляет признак для последующей постобработки в рантайме
+    """
     callable = None
     permission_code = None
     verbose_name = None
@@ -42,7 +61,23 @@ class WrappedLabel:
 
 
 def _wrap_method(cls, perm_code, method_name, verbose_name):
+    """
+    Оборачивание метода с указанным наименованием
+    в указанном классе для добавления поддержки системы ролей
+
+    :param cls: Класс, в котором будет выполнятся поиск метода (viewset)
+    :param perm_code: Базовый код разрешения
+    :param method_name: Имя искомого метода-отображения
+    :param verbose_name: Человекопонятное наименование для права
+    """
     def overrided_dispatch(self, request, *args, **kwargs):
+        """
+        Перекрытый метод dispatch из viewset
+        Добавлена передача ссылки на viewset в вызываемый метод.
+        Необходимость возникла в связи с тем,
+        что вызываемый метод оборачивается в WrappedMethod
+        и информация о родительском классе теряется
+        """
         self.args = args
         self.kwargs = kwargs
         request = self.initialize_request(request, *args, **kwargs)
@@ -52,7 +87,6 @@ def _wrap_method(cls, perm_code, method_name, verbose_name):
         try:
             self.initial(request, *args, **kwargs)
 
-            # Get the appropriate handler method
             if request.method.lower() in self.http_method_names:
                 handler = getattr(
                     self, request.method.lower(),
@@ -60,6 +94,7 @@ def _wrap_method(cls, perm_code, method_name, verbose_name):
             else:
                 handler = self.http_method_not_allowed
 
+            # TODO: Добавлена передача ссылки на текущий класс (self)
             response = handler(self, request, *args, **kwargs)
 
         except Exception as exc:
@@ -70,6 +105,7 @@ def _wrap_method(cls, perm_code, method_name, verbose_name):
 
         return self.response
 
+    # Переопределяем метод dispatch (возможно есть способ обойтись без этого?)
     cls.dispatch = overrided_dispatch
 
     existed_method = getattr(cls, method_name, None)
@@ -81,6 +117,8 @@ def _wrap_method(cls, perm_code, method_name, verbose_name):
 
         setattr(cls, method_name, wrapped_method)
 
+        # Добавляем код и наименования разрешения в общий регистр,
+        # чтобы при миграциях можно было создать недостающие записи
         PermissionRegistry.add_code(
             code=f'{cls.name}:{perm_code}',
             name=f'{cls.verbose_name}:{verbose_name}',
@@ -88,8 +126,22 @@ def _wrap_method(cls, perm_code, method_name, verbose_name):
 
 
 def add_permissions(cls):
-    assert cls.name is not None, (
-        'Необходимо указать наименование отображения!')
+    """
+    Обертка над классом-viewset
+    Ищет базовый список методов по CRUD, добавляет каждому проверку прав
+    Также ищет помеченные декоратором permission_required
+    и добавляет поддержку прав.
+    """
+    # Проверка на наличие у viewset атрибутa name.
+    # Значение данного атрибута используется в качестве префикса
+    # к полному коду разрешения.
+    assert getattr(cls, 'name', None) is not None, (
+        'Необходимо указать атрибут name!')
+    # Проверка на наличие у viewset атрибута verbose_name.
+    # Значение данного атрибута используется в качестве части
+    # человекопонятного наименования разрешения.
+    assert getattr(cls, 'verbose_name', None), (
+        'Необходимо указать атрибут verbose_name!')
 
     crud_perms = (
         (PERM_ADD, 'create', 'Создание'),
@@ -98,6 +150,7 @@ def add_permissions(cls):
         (PERM_DELETE, 'destroy', 'Удаление'),
     )
 
+    # Обработка базовых методов-отображений
     for code, method_name, verbose_name in crud_perms:
         if isinstance(method_name, (list, tuple)):
             for name in method_name:
@@ -105,6 +158,8 @@ def add_permissions(cls):
         else:
             _wrap_method(cls, code, method_name, verbose_name)
 
+    # Обработка кастомных методов-отображений,
+    # помеченных декоратором permission_required
     for name in cls.__dict__.keys():
         obj = getattr(cls, name, None)
         if obj is not None and hasattr(obj, 'is_wrapped'):

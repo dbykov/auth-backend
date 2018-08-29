@@ -1,21 +1,30 @@
-from auth_backend.auth.permissions import PermissionRegistry
+from auth_backend.permission.utils import PermissionRegistry
 
 
 def create_permissions(sender, *args, **kwargs):
     """
     Формирование отсутствующих разрешений ролей
     """
-    from auth_backend.models import Permission
+    from auth_backend.apps import AuthBackendConfig
+    from auth_backend.permission.models import MetaPermission
+
+    # Добавляем записи только при миграции основного модуля
+    if not isinstance(sender, AuthBackendConfig):
+        return
+
+    print('Create permissions...')
 
     all_codes = set(PermissionRegistry.codes())
-    existed_codes = set(Permission.objects.filter(
+    existed_codes = set(MetaPermission.objects.filter(
         code__in=all_codes
     ).values_list('code', flat=True))
 
     non_existed_codes = all_codes - existed_codes
     for code in non_existed_codes:
         name = PermissionRegistry.name_by_code(code)
-        Permission.objects.create(
+        MetaPermission.objects.create(
             code=code,
             name=name,
         )
+
+    print(f'Created {len(non_existed_codes)} permissions.')
