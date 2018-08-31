@@ -1,4 +1,4 @@
-from auth_backend.receivers import create_permissions
+from auth_backend.permission.receivers import create_permissions
 from django.apps import AppConfig
 from django.db.models.signals import post_migrate
 

@@ -1,15 +1,19 @@
 from django.db import models
 from django.db.models import PROTECT
 
-from auth_backend.user.models import UserMixin
+from auth_backend.base.mixins import UserMixin, DateMixin
+
+# Максимальная длина кода разрешения
+PERMISSION_CODE_LENGTH = 64
 
 
-class MetaPermission(models.Model):
+class MetaPermission(DateMixin):
     """
     Модель базового разрешения
     """
     code = models.CharField(
-        max_length=64, unique=True,
+        max_length=PERMISSION_CODE_LENGTH,
+        unique=True,
         verbose_name='Код разрешения')
     name = models.CharField(
         max_length=128,
@@ -24,20 +28,17 @@ class MetaPermission(models.Model):
         verbose_name_plural = 'Базовые разрешения ролей'
 
 
-class RolePermission(models.Model, UserMixin):
+class RolePermission(UserMixin, DateMixin):
     """
     Модель разрешения, привязанного к роли
     """
     code = models.CharField(
-        max_length=64, unique=True,
+        max_length=PERMISSION_CODE_LENGTH,
+        unique=True,
         verbose_name='Код разрешения')
     name = models.CharField(
         max_length=128,
         verbose_name='Наименование разрешения')
-    organizations = models.ManyToManyField(
-        to='organization.Organization',
-        verbose_name='Список организаций',
-        blank=True)
     meta_permission = models.ForeignKey(
         to='MetaPermission',
         verbose_name='Ссылка на базовое разрешение',

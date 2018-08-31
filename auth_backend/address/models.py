@@ -10,22 +10,22 @@ class Address(models.Model):
     type = models.PositiveSmallIntegerField(
         choices=AddressType.choices())
     zipcode = models.CharField(
-        max_length=20, verbose_name='Почтовый индекс',
+        max_length=10, verbose_name='Почтовый индекс',
         default='', blank=True)
     place = models.CharField(
-        max_length=128, verbose_name='Населенный пункт',
+        max_length=64, verbose_name='Населенный пункт',
         default='', blank=True)
     street = models.CharField(
         max_length=128, verbose_name='Улица',
         default='', blank=True)
     house_num = models.CharField(
-        max_length=20, verbose_name='Дом',
+        max_length=10, verbose_name='Дом',
         default='', blank=True)
     housing = models.CharField(
-        max_length=20, verbose_name='Корпус',
+        max_length=10, verbose_name='Корпус',
         default='', blank=True)
     flat = models.CharField(
-        max_length=20, verbose_name='Квартира',
+        max_length=10, verbose_name='Квартира',
         default='', blank=True)
 
     @property

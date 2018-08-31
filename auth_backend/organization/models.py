@@ -3,15 +3,15 @@ from django.db.models import PROTECT
 from mptt.fields import TreeForeignKey
 from mptt.models import MPTTModel
 
-from auth_backend.user.models import UserMixin
+from auth_backend.base.mixins import UserMixin, DateMixin
 
 
-class OrganizationType(models.Model, UserMixin):
+class OrganizationType(UserMixin, DateMixin):
     """
     Модель типа организации
     """
     name = models.CharField(
-        max_length=128,
+        max_length=64,
         verbose_name='Наименование типа организации')
 
     def __str__(self):
@@ -23,7 +23,7 @@ class OrganizationType(models.Model, UserMixin):
         verbose_name_plural = 'Типы организаций'
 
 
-class Organization(MPTTModel, UserMixin):
+class Organization(UserMixin, DateMixin, MPTTModel):
     """
     Модель организации
     """
@@ -70,7 +70,7 @@ class Organization(MPTTModel, UserMixin):
         max_length=32, verbose_name='Телефон',
         default='', blank=True)
     email = models.CharField(
-        max_length=32, verbose_name='Эл.почта',
+        max_length=128, verbose_name='Эл.почта',
         default='', blank=True)
     site = models.CharField(
         max_length=128, verbose_name='Сайт',

@@ -1,34 +1,43 @@
-from django.contrib.auth.models import AbstractUser
-from django.db import models
-from django.db.models import CASCADE, PROTECT
+import os
 
+from django.conf import settings
+from django.contrib.auth.base_user import AbstractBaseUser
+from django.contrib.auth.models import UserManager, PermissionsMixin
+from django.contrib.auth.validators import UnicodeUsernameValidator
+from django.db import models
+from django.db.models import PROTECT
+
+from auth_backend.base.utils import get_active_organization_id
 from auth_backend.user.enums import Gender
 
 
-class UserMixin:
-    """
-    Добавляет в класс поле с ссылкой на автора (пользователя)
-    """
-    author = models.ForeignKey(
-        to='User', null=True,
-        verbose_name='Ссылка на пользователя',
-        on_delete=CASCADE)
-
-
-class User(AbstractUser):
+class User(AbstractBaseUser, PermissionsMixin):
     """
     Модель пользователя системы
     """
+    username_validator = UnicodeUsernameValidator()
+
+    username = models.CharField(
+        'Имя пользователя',
+        max_length=150,
+        unique=True)
+    email = models.EmailField('Эл.почта', blank=True)
+    is_staff = models.BooleanField(
+        'Статус персонала', default=False)
+    is_superuser = models.BooleanField(
+        'Суперадмин', default=False)
+    is_active = models.BooleanField(
+        'Активный', default=True)
     roles = models.ManyToManyField(
-        to='role.Role',
+        to='role.OrganizationRole',
         verbose_name='Роли пользователя')
-    first_name = models.CharField(
+    iname = models.CharField(
         max_length=30, verbose_name='Имя',
         default='', blank=True)
-    last_name = models.CharField(
+    fname = models.CharField(
         max_length=150, verbose_name='Фамилия',
         default='', blank=True)
-    patronymic = models.CharField(
+    oname = models.CharField(
         max_length=150, verbose_name='Отчество',
         default='', blank=True)
     gender = models.PositiveSmallIntegerField(
@@ -36,17 +45,10 @@ class User(AbstractUser):
         verbose_name='Пол', default=Gender.MALE)
     birth_date = models.DateField(
         verbose_name='Дата рождения', null=True)
-    organization = models.ForeignKey(
-        to='organization.Organization',
-        verbose_name='Ссылка на организацию',
-        null=True,
-        on_delete=PROTECT, related_name='users')
-    position = models.CharField(
-        max_length=128, verbose_name='Должность',
-        default='')
     photo = models.FileField(
         verbose_name='Фото',
-        null=True, upload_to='photos/')
+        null=True,
+        upload_to=os.path.join(settings.MEDIA_ROOT, 'avatars'))
     admission_date = models.DateField(
         verbose_name='Дата приема на работу', null=True)
     phone = models.CharField(
@@ -56,6 +58,18 @@ class User(AbstractUser):
         to='address.Address',
         verbose_name='Адрес', null=True,
         on_delete=PROTECT)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    objects = UserManager()
+
+    EMAIL_FIELD = 'email'
+    USERNAME_FIELD = 'username'
+    REQUIRED_FIELDS = ['email']
+
+    def clean(self):
+        super().clean()
+
+        self.email = self.__class__.objects.normalize_email(self.email)
 
     def has_permission(self, code):
         """
@@ -71,19 +85,31 @@ class User(AbstractUser):
 
         return result
 
+    def organizations(self):
+        """
+        Список идентификаторов организаций пользователя
+        """
+        return self.roles.values_list('organization', flat=True)
+
+    def organization_positions(self):
+        current_organization = get_active_organization_id()
+
+        return self.roles.filter(
+            organization=current_organization)
+
     @property
     def fio(self):
         """
         Полное ФИО
         """
         return ' '.join(filter(None, (
-            self.first_name,
-            self.last_name,
-            self.patronymic,
+            self.fname,
+            self.iname,
+            self.oname,
         )))
 
     def __str__(self):
-        return f'{self.id}: {self.username} ({self.fio})'
+        return f'{self.id}: {self.username} {self.fio}'
 
     class Meta:
         db_table = 'users'

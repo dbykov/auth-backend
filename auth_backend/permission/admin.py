@@ -11,5 +11,4 @@ class MetaPermissionAdmin(admin.ModelAdmin):
 @admin.register(RolePermission)
 class RolePermissionAdmin(admin.ModelAdmin):
     list_display = ['code', 'name', 'meta_permission']
-    filter_horizontal = ['organizations']
     readonly_fields = ['code']

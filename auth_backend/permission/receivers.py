@@ -5,11 +5,11 @@ def create_permissions(sender, *args, **kwargs):
     """
     Формирование отсутствующих разрешений ролей
     """
-    from auth_backend.apps import AuthBackendConfig
+    from auth_backend.permission.apps import PermissionAppConfig
     from auth_backend.permission.models import MetaPermission
 
     # Добавляем записи только при миграции основного модуля
-    if not isinstance(sender, AuthBackendConfig):
+    if not isinstance(sender, PermissionAppConfig):
         return
 
     print('Create permissions...')
