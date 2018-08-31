@@ -40,6 +40,7 @@ class OrganizationMixin(models.Model):
     """
     organization = models.ForeignKey(
         to='organization.Organization',
+        null=True,
         verbose_name='Ссылка на организацию',
         on_delete=PROTECT)
 
