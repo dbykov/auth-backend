@@ -37,9 +37,9 @@ class OrganizationRole(DateMixin, OrganizationMixin):
         on_delete=PROTECT, related_name='organizations')
 
     def __str__(self):
-        return f'{self.id}: {self}'
+        return f'{self.id}: {self.role.name} в {self.organization.short_name}'
 
     class Meta:
         db_table = 'organization_roles'
-        verbose_name = 'Роль на учреждении'
-        verbose_name_plural = 'Роли на учреждениях'
+        verbose_name = 'Роль в организации'
+        verbose_name_plural = 'Роли на организациях'

@@ -1,3 +1,5 @@
+from functools import wraps
+
 from rest_framework.exceptions import PermissionDenied
 
 from auth_backend.permission.utils import (
@@ -26,6 +28,9 @@ class WrappedMethod:
 
     def __init__(self, fn):
         self.callable = fn
+
+        self.__doc__ = fn.__doc__
+        self.__name__ = fn.__name__
 
     @property
     def full_code(self):

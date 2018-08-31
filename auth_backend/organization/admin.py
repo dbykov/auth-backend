@@ -12,7 +12,11 @@ class OrganizationTypeAdmin(admin.ModelAdmin):
 
 @admin.register(Organization)
 class OrganizationAdmin(admin.ModelAdmin):
-    list_display = ['short_name', 'type']
+    list_display = [
+        'short_name',
+        'type',
+        'parent',
+    ]
 
 
 @admin.register(Address)
