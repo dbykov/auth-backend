@@ -24,7 +24,6 @@ def create_permissions(sender, *args, **kwargs):
         name = PermissionRegistry.name_by_code(code)
         MetaPermission.objects.create(
             code=code,
-            name=name,
-        )
+            name=name)
 
     print(f'Created {len(non_existed_codes)} permissions.')

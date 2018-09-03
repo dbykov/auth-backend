@@ -81,7 +81,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
         if not result:
             result = self.__class__.objects.filter(
-                roles__permissions__code=code
+                roles__role__permissions__code=code
             ).exists()
 
         return result

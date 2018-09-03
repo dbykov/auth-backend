@@ -1,5 +1,4 @@
-from functools import wraps
-
+from django.http import HttpResponseNotAllowed
 from rest_framework.exceptions import PermissionDenied
 
 from auth_backend.permission.utils import (
@@ -15,10 +14,7 @@ class WrappedMethod:
     а также кода разрешения.
     Добавляет при вызове обернутого метода проверку на наличие прав
     """
-    # Декорируемый метод
-    callable = None
-    # Класс-viewset
-    viewset = None
+    name = None
     # Базовый код разрешения для данного конкретного метода
     permission_code = None
     # Человекопонятное наименование разрешения
@@ -26,24 +22,17 @@ class WrappedMethod:
     # Признак, что указанный метод уже был декорирован
     is_wrapped = True
 
-    def __init__(self, fn):
-        self.callable = fn
-
-        self.__doc__ = fn.__doc__
-        self.__name__ = fn.__name__
+    def __init__(self, viewset_name, permission_code, verbose_name):
+        self.name = viewset_name
+        self.permission_code = permission_code
+        self.verbose_name = verbose_name
 
     @property
     def full_code(self):
         """
         Полный код разрешения
         """
-        return f'{self.viewset.name}:{self.permission_code}'
-
-    def __call__(self, viewset, request):
-        if not request.user.has_permission(self.full_code):
-            raise PermissionDenied('Нет прав для доступа к ресурсу')
-
-        return self.callable.__call__(viewset, request)
+        return f'{self.name}:{self.permission_code}'
 
 
 class WrappedLabel:
@@ -83,24 +72,37 @@ def _wrap_method(cls, perm_code, method_name, verbose_name):
         что вызываемый метод оборачивается в WrappedMethod
         и информация о родительском классе теряется
         """
+
+        def method_not_allowed(*a, **kw):
+            return HttpResponseNotAllowed(self._allowed_methods())
+
+        def check_permission():
+            if not request.user.has_permission(wrapper.full_code):
+                raise PermissionDenied
+
         self.args = args
         self.kwargs = kwargs
+
         request = self.initialize_request(request, *args, **kwargs)
         self.request = request
-        self.headers = self.default_response_headers  # deprecate?
+        self.headers = self.default_response_headers
 
         try:
             self.initial(request, *args, **kwargs)
 
-            if request.method.lower() in self.http_method_names:
-                handler = getattr(
-                    self, request.method.lower(),
-                    self.http_method_not_allowed)
-            else:
-                handler = self.http_method_not_allowed
+            name = request.method.lower()
+            handler = getattr(self, name, None)
+            if handler is None or name not in self.http_method_names:
+                handler = method_not_allowed
 
-            # TODO: Добавлена передача ссылки на текущий класс (self)
-            response = handler(self, request, *args, **kwargs)
+            if hasattr(self, '_wrappers'):
+                wrapper = self._wrappers.get(handler.__name__)
+
+                if wrapper is not None:
+                    # Проверка наличия у пользователя разрешений
+                    check_permission()
+
+            response = handler(request, *args, **kwargs)
 
         except Exception as exc:
             response = self.handle_exception(exc)
@@ -115,12 +117,15 @@ def _wrap_method(cls, perm_code, method_name, verbose_name):
 
     existed_method = getattr(cls, method_name, None)
     if existed_method is not None:
-        wrapped_method = WrappedMethod(existed_method)
-        wrapped_method.viewset = cls
-        wrapped_method.permission_code = perm_code
-        wrapped_method.verbose_name = verbose_name
+        wrapped_method = WrappedMethod(
+            viewset_name=cls.name,
+            permission_code=perm_code,
+            verbose_name=verbose_name)
 
-        setattr(cls, method_name, wrapped_method)
+        if not hasattr(cls, '_wrappers'):
+            cls._wrappers = {}
+
+        cls._wrappers[method_name] = wrapped_method
 
         # Добавляем код и наименования разрешения в общий регистр,
         # чтобы при миграциях можно было создать недостающие записи
@@ -167,13 +172,23 @@ def add_permissions(cls):
     # помеченных декоратором permission_required
     for name in cls.__dict__.keys():
         obj = getattr(cls, name, None)
-        if obj is not None and hasattr(obj, 'is_wrapped'):
-            if obj.is_wrapped:
-                continue
+        is_wrapped = getattr(obj, 'is_wrapped', None)
 
+        if obj is not None and is_wrapped is not None and not is_wrapped:
             _wrap_method(cls, obj.permission_code, name, obj.verbose_name)
 
     return cls
+
+
+def extend_permission_classes(*permission_classes):
+    """
+    Расширяем список классов с проверкой разрешений
+    """
+    def wrapper(cls):
+        cls.permission_classes.extend(permission_classes)
+
+        return cls
+    return wrapper
 
 
 def permission_required(perm_code, verbose_name):
