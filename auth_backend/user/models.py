@@ -30,7 +30,8 @@ class User(AbstractBaseUser, PermissionsMixin):
         'Активный', default=True)
     roles = models.ManyToManyField(
         to='role.OrganizationRole',
-        verbose_name='Роли пользователя')
+        verbose_name='Роли пользователя',
+        blank=True)
     iname = models.CharField(
         max_length=30, verbose_name='Имя',
         default='', blank=True)
