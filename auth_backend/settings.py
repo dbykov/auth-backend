@@ -21,10 +21,8 @@ SIMPLE_JWT = {
 }
 
 INSTALLED_APPS = [
-    'auth_backend.organization',
     'auth_backend.permission',
     'auth_backend.role',
-    'auth_backend.address',
 ]
 
 CACHES = {

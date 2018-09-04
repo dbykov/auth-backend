@@ -1,8 +1,7 @@
 from django.db import models
-from django.db.models import PROTECT
 
-from auth_backend.base.mixins import (
-    UserMixin, DateMixin, OrganizationMixin)
+from sport.base.mixins import (
+    UserMixin, DateMixin)
 
 
 class Role(UserMixin, DateMixin):
@@ -10,10 +9,12 @@ class Role(UserMixin, DateMixin):
     Модель пользовательских ролей
     """
     code = models.CharField(
-        max_length=16, unique=True,
+        max_length=16,
+        unique=True,
         verbose_name='Код роли')
     name = models.CharField(
-        max_length=128, verbose_name='Наименование роли')
+        max_length=128,
+        verbose_name='Наименование роли')
     permissions = models.ManyToManyField(
         to='permission.RolePermission',
         verbose_name='Список разрешений')
@@ -25,21 +26,3 @@ class Role(UserMixin, DateMixin):
         db_table = 'roles'
         verbose_name = 'Роль пользователя'
         verbose_name_plural = 'Роли пользователей'
-
-
-class OrganizationRole(DateMixin, OrganizationMixin):
-    """
-    Модель ролей в организациях
-    """
-    role = models.ForeignKey(
-        to='Role',
-        verbose_name='Ссылка на роль',
-        on_delete=PROTECT, related_name='organizations')
-
-    def __str__(self):
-        return f'{self.id}: {self.role.name} в {self.organization.short_name}'
-
-    class Meta:
-        db_table = 'organization_roles'
-        verbose_name = 'Роль в организации'
-        verbose_name_plural = 'Роли на организациях'
