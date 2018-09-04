@@ -1,12 +1,12 @@
-from rest_framework import serializers
+from rest_framework.serializers import ModelSerializer
 
 from auth_backend.address.serializers import AddressSerializer
 from auth_backend.organization.models import (
     OrganizationType, Organization)
-from auth_backend.user.serializers import UserSerializer
+from auth_backend.user.serializers import SimpleUserSerializer
 
 
-class OrganizationTypeSerializer(serializers.ModelSerializer):
+class OrganizationTypeSerializer(ModelSerializer):
 
     class Meta:
         model = OrganizationType
@@ -16,10 +16,10 @@ class OrganizationTypeSerializer(serializers.ModelSerializer):
         )
 
 
-class OrganizationSerializer(serializers.ModelSerializer):
+class OrganizationSerializer(ModelSerializer):
     address_jur = AddressSerializer()
     address_fact = AddressSerializer()
-    boss = UserSerializer()
+    boss = SimpleUserSerializer()
 
     class Meta:
         model = Organization

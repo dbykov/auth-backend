@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 from django.db.models import PROTECT
 from mptt.fields import TreeForeignKey
@@ -54,7 +55,7 @@ class Organization(UserMixin, DateMixin, MPTTModel):
         max_length=128, verbose_name='Номер лицензии',
         default='', blank=True)
     boss = models.ForeignKey(
-        to='user.User',
+        to=settings.AUTH_USER_MODEL,
         verbose_name='Руководитель организации',
         related_name='boss_organizations',
         null=True, on_delete=PROTECT, blank=True)

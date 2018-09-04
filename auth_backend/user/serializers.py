@@ -1,42 +1,22 @@
+from django.apps import apps
+from django.conf import settings
 from rest_framework.serializers import ModelSerializer
 
-from auth_backend.address.serializers import AddressSerializer
-from auth_backend.organization.models import Organization
-from auth_backend.role.serializers import RoleSerializer
-from auth_backend.user.models import User
+from auth_backend.role.serializers import OrganizationRoleSerializer
 
 
-class SimpleOrganizationSerializer(ModelSerializer):
+class SimpleUserSerializer(ModelSerializer):
+    roles = OrganizationRoleSerializer(many=True)
 
     class Meta:
-        model = Organization
+        model = apps.get_model(
+            *settings.AUTH_USER_MODEL.split('.'))
         fields = (
             'id',
-            'short_name',
-            'type_id',
-            'author_id',
-        )
-
-
-class UserSerializer(ModelSerializer):
-    roles = RoleSerializer(many=True)
-    address = AddressSerializer()
-
-    class Meta:
-        model = User
-        fields = (
-            'id',
-            'username',
             'email',
-            'iname',
-            'fname',
-            'oname',
-            'is_active',
-            'is_superuser',
+            model.USERNAME_FIELD,
             'gender',
             'get_gender_display',
             'birth_date',
             'roles',
-            'phone',
-            'address',
         )

@@ -20,14 +20,10 @@ SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(hours=1),
 }
 
-AUTH_USER_MODEL = 'user.User'
-
-
 INSTALLED_APPS = [
     'auth_backend.organization',
     'auth_backend.permission',
     'auth_backend.role',
-    'auth_backend.user',
     'auth_backend.address',
 ]
 

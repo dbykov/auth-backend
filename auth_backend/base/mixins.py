@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 from django.db.models import CASCADE, PROTECT
 
@@ -11,7 +12,8 @@ class UserMixin(models.Model):
     has_author = True
 
     author = models.ForeignKey(
-        to='user.User', null=True,
+        to=settings.AUTH_USER_MODEL,
+        null=True,
         verbose_name='Автор',
         on_delete=CASCADE)
 
