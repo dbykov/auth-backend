@@ -1,7 +1,7 @@
 from django.db import models
 from django.db.models import PROTECT
 
-from sport.base.mixins import UserMixin, DateMixin
+from auth_backend.base.mixins import UserMixin, DateMixin
 
 # Максимальная длина кода разрешения
 PERMISSION_CODE_LENGTH = 64

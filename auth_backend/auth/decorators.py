@@ -185,7 +185,8 @@ def extend_permission_classes(*permission_classes):
     Расширяем список классов с проверкой разрешений
     """
     def wrapper(cls):
-        cls.permission_classes.extend(permission_classes)
+        cls.permission_classes = (
+            cls.permission_classes + list(permission_classes))
 
         return cls
     return wrapper

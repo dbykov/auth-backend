@@ -1,7 +1,6 @@
 from django.db import models
 
-from sport.base.mixins import (
-    UserMixin, DateMixin)
+from auth_backend.base.mixins import UserMixin, DateMixin
 
 
 class Role(UserMixin, DateMixin):
