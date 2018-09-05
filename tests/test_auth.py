@@ -14,27 +14,27 @@ class TestAuthentication(APITestCase):
 
     def setUp(self):
         self.user = get_user_model().objects.create_user(
-            username='username',
+            email='username@example.com',
             password='password',
         )
 
     def test_success_authentication(self):
         global refresh_token
 
-        response = self.client.post('/api/auth/token/', {
-            "username": 'username',
+        response = self.client.post('/token/', {
+            "email": 'username@example.com',
             "password": 'password'
         }, format='json')
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        
+
         payload = response.json()
         self.assertTrue('access' in payload and 'refresh' in payload)
         refresh_token = payload['refresh']
 
     def test_token_refresh(self):
         if refresh_token is not None:
-            response = self.client.post('/api/auth/token/refresh/', {
+            response = self.client.post('/token/refresh/', {
                 "refresh": refresh_token,
             }, format='json')
-            self.assertEqual(response.status_code, status.HTTP_200_OK)        
+            self.assertEqual(response.status_code, status.HTTP_200_OK)

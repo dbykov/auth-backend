@@ -1,0 +1,4 @@
+site_name: auth-backend
+site_description: end
+repo_url: https://gitlab.com/apir/auth-backend
+site_dir: html
