@@ -50,8 +50,8 @@ class WrappedLabel:
         self.permission_code = perm_code
         self.verbose_name = verbose_name
 
-    def __call__(self, request):
-        return self.callable(request)
+    def __call__(self, *args, **kwargs):
+        return self.callable(*args, **kwargs)
 
 
 def _wrap_method(cls, perm_code, method_name, verbose_name):
@@ -96,7 +96,12 @@ def _wrap_method(cls, perm_code, method_name, verbose_name):
                 handler = method_not_allowed
 
             if hasattr(self, '_wrappers'):
-                wrapper = self._wrappers.get(handler.__name__)
+                if isinstance(handler, WrappedLabel):
+                    name = handler.callable.__name__
+                else:
+                    name = handler.__name__
+
+                wrapper = self._wrappers.get(name)
 
                 if wrapper is not None:
                     # Проверка наличия у пользователя разрешений
@@ -170,12 +175,16 @@ def add_permissions(cls):
 
     # Обработка кастомных методов-отображений,
     # помеченных декоратором permission_required
-    for name in cls.__dict__.keys():
-        obj = getattr(cls, name, None)
+    keys = list(cls.__dict__.keys())
+    for key in keys:
+        if key.startswith('__'):
+            continue
+
+        obj = getattr(cls, key, None)
         is_wrapped = getattr(obj, 'is_wrapped', None)
 
         if obj is not None and is_wrapped is not None and not is_wrapped:
-            _wrap_method(cls, obj.permission_code, name, obj.verbose_name)
+            _wrap_method(cls, obj.permission_code, key, obj.verbose_name)
 
     return cls
 
@@ -198,9 +207,10 @@ def permission_required(perm_code, verbose_name):
     :param perm_code: Код разрешения
     """
     def outer(view):
-        def inner(*args, **kwargs):
-            return view(*args, **kwargs)
+        view.permission_code = perm_code
+        view.verbose_name = verbose_name
+        view.is_wrapped = False
 
-        return WrappedLabel(inner, perm_code, verbose_name)
+        return view
     return outer
 
