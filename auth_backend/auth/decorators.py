@@ -189,4 +189,3 @@ def permission_required(perm_code, verbose_name):
 
         return view
     return outer
-
