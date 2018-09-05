@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 
 name = 'auth_backend'
-version = '0.1.5'
+version = '0.1.6'
 
 
 requires = (
