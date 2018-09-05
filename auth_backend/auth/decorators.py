@@ -35,25 +35,6 @@ class WrappedMethod:
         return f'{self.name}:{self.permission_code}'
 
 
-class WrappedLabel:
-    """
-    Обертка над кастомным методом-отображением
-    Добавляет признак для последующей постобработки в рантайме
-    """
-    callable = None
-    permission_code = None
-    verbose_name = None
-    is_wrapped = False
-
-    def __init__(self, fn, perm_code, verbose_name):
-        self.callable = fn
-        self.permission_code = perm_code
-        self.verbose_name = verbose_name
-
-    def __call__(self, *args, **kwargs):
-        return self.callable(*args, **kwargs)
-
-
 def _wrap_method(cls, perm_code, method_name, verbose_name):
     """
     Оборачивание метода с указанным наименованием
@@ -96,12 +77,7 @@ def _wrap_method(cls, perm_code, method_name, verbose_name):
                 handler = method_not_allowed
 
             if hasattr(self, '_wrappers'):
-                if isinstance(handler, WrappedLabel):
-                    name = handler.callable.__name__
-                else:
-                    name = handler.__name__
-
-                wrapper = self._wrappers.get(name)
+                wrapper = self._wrappers.get(handler.__name__)
 
                 if wrapper is not None:
                     # Проверка наличия у пользователя разрешений
