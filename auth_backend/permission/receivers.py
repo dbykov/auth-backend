@@ -1,3 +1,6 @@
+from auth_backend.permission.signals import after_create_permissions
+
+
 def create_permissions(sender, *args, **kwargs):
     """
     Формирование отсутствующих разрешений ролей
@@ -25,3 +28,5 @@ def create_permissions(sender, *args, **kwargs):
             name=name)
 
     print(f'Created {len(non_existed_codes)} permissions.')
+
+    after_create_permissions.send(None)

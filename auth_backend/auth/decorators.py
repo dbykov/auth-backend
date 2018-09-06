@@ -1,3 +1,5 @@
+from typing import Type, List, Callable
+
 from django.http import HttpResponseNotAllowed
 from rest_framework.exceptions import PermissionDenied
 
@@ -165,7 +167,7 @@ def add_permissions(cls):
     return cls
 
 
-def extend_permission_classes(*permission_classes):
+def extend_permission_classes(*permission_classes: List[Type[object]]):
     """
     Расширяем список классов с проверкой разрешений
     """
@@ -177,10 +179,12 @@ def extend_permission_classes(*permission_classes):
     return wrapper
 
 
-def permission_required(perm_code, verbose_name):
+def permission_required(perm_code: str, verbose_name: str) -> Callable:
     """
     Добавление требования определенного кода разрешение для данного действия
+
     :param perm_code: Код разрешения
+    :param verbose_name: Наименование разрешения
     """
     def outer(view):
         view.permission_code = perm_code
