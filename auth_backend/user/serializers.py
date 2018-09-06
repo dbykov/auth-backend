@@ -1,7 +1,9 @@
 from django.contrib.auth import get_user_model, password_validation
 from django.contrib.auth.tokens import default_token_generator
+from django.core import mail
 from django.core.exceptions import ValidationError
-from django.utils.http import urlsafe_base64_decode
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from rest_framework import serializers
 
 UserModel = get_user_model()
@@ -56,3 +58,41 @@ class ChangePasswordSerializer(serializers.Serializer):
                 ValidationError):
             user = None
         return user
+
+
+class RequestResetPasswordSerializer(serializers.Serializer):
+    """
+    Serializer for reset password request.
+    """
+    email = serializers.EmailField(required=True)
+
+    def __init__(self, instance=None, *args, **kwargs):
+        super().__init__(instance, *args, **kwargs)
+        self._user = self._get_user()
+
+    def validate_email(self, value):
+        if not self._user:
+            raise serializers.ValidationError('User not found')
+
+        return value
+
+    def _get_user(self):
+        try:
+            user = UserModel._default_manager.get(
+                email=self.initial_data.get('email'))
+        except UserModel.DoesNotExist:
+            user = None
+
+        return user
+
+    def send(self):
+        uidb64 = urlsafe_base64_encode(force_bytes(self._user.pk)).decode()
+        token = default_token_generator.make_token(self._user)
+        # TODO (dbykov) тут отправляется ссылка на почту,
+        # TODO в каком виде она будет пока не ясно,
+        # TODO так как она ведет на фронт
+        mail.send_mail(
+            'Восстановление пароля', f'uidb64: {uidb64}; token: {token}',
+            'from@example.com', [self._user.email],
+            fail_silently=False,
+        )
