@@ -1,12 +1,10 @@
-from auth_backend.permission.utils import PermissionRegistry
-
-
 def create_permissions(sender, *args, **kwargs):
     """
     Формирование отсутствующих разрешений ролей
     """
     from auth_backend.permission.apps import PermissionAppConfig
     from auth_backend.permission.models import MetaPermission
+    from auth_backend.permission.utils import PermissionRegistry
 
     # Добавляем записи только при миграции основного модуля
     if not isinstance(sender, PermissionAppConfig):

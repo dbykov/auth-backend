@@ -16,7 +16,7 @@ class MetaPermission(DateMixin):
         unique=True,
         verbose_name='Код разрешения')
     name = models.CharField(
-        max_length=128,
+        max_length=200,
         verbose_name='Наименование разрешения')
 
     def __str__(self):
@@ -37,7 +37,7 @@ class RolePermission(UserMixin, DateMixin):
         unique=True,
         verbose_name='Код разрешения')
     name = models.CharField(
-        max_length=128,
+        max_length=200,
         verbose_name='Наименование разрешения')
     meta_permission = models.ForeignKey(
         to='MetaPermission',

@@ -1,6 +1,10 @@
 """
 Базовая информация о разрешениях
 """
+from typing import Iterator, KeysView, Dict, Any
+
+from rest_framework.request import Request
+from rest_framework.views import APIView
 
 #
 # Общие коды разрешений
@@ -23,21 +27,31 @@ class PermissionRegistry:
     """
     Регистр имеющихся в системе разрешений
     """
-    __permission_codes = {}
-    __populated = False
+    __permission_codes: Dict[str, str] = {}
+    __populated: bool = False
 
     @classmethod
-    def add_code(cls, code, name):
+    def add_code(cls, code: str, name: str):
         cls.__permission_codes[code] = name
 
     @classmethod
-    def codes(cls):
+    def codes(cls) -> KeysView:
         cls.populate()
 
         return cls.__permission_codes.keys()
 
     @classmethod
-    def name_by_code(cls, code):
+    def all_codes_by_permission_code(cls, permission_code: str) -> Iterator:
+        """
+        Возвращает список всех кодов разрешений для указанного типа
+        (например, PERM_VIEW)
+
+        :param permission_code: Код разрешения
+        """
+        return filter(lambda x: x.split(':')[1] == permission_code, cls.codes())
+
+    @classmethod
+    def name_by_code(cls, code: str) -> str:
         return cls.__permission_codes[code]
 
     @classmethod
@@ -53,13 +67,16 @@ class PermissionRegistry:
         root_urls = settings.ROOT_URLCONF
         __import__(root_urls)
 
+        cls.__populated = True
+
 
 class IsAuthor:
     """
     Проверка пользователя на авторство над указанным объектом
     """
-    def has_permission(self, *args, **kwargs):
+    def has_permission(self, *args, **kwargs) -> bool:
         return True
 
-    def has_object_permission(self, request, viewset, obj):
+    def has_object_permission(
+            self, request: Request, viewset: APIView, obj: Any) -> bool:
         return obj.is_owned_by(request.user)

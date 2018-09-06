@@ -8,11 +8,11 @@ class Role(UserMixin, DateMixin):
     Модель пользовательских ролей
     """
     code = models.CharField(
-        max_length=16,
+        max_length=64,
         unique=True,
         verbose_name='Код роли')
     name = models.CharField(
-        max_length=128,
+        max_length=200,
         verbose_name='Наименование роли')
     permissions = models.ManyToManyField(
         to='permission.RolePermission',
