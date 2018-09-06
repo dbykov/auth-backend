@@ -1,9 +1,9 @@
 from django.db import models
 
-from auth_backend.base.mixins import UserMixin, DateMixin
+from auth_backend.base.mixins import DateMixin
 
 
-class Role(UserMixin, DateMixin):
+class Role(DateMixin):
     """
     Модель пользовательских ролей
     """

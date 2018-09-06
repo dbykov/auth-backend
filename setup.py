@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 
 name = 'auth_backend'
-version = '0.1.6'
+version = '0.1.7'
 
 
 requires = (
@@ -12,7 +12,6 @@ requires = (
     "psycopg2-binary >= 2.7.5",
     "redis >= 2.10.6",
     "django-redis >= 4.9.0",
-    "django-mptt >= 0.9.1",
 )
 
 setup(

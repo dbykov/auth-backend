@@ -1,7 +1,7 @@
 from django.db import models
 from django.db.models import PROTECT
 
-from auth_backend.base.mixins import UserMixin, DateMixin
+from auth_backend.base.mixins import DateMixin
 
 # Максимальная длина кода разрешения
 PERMISSION_CODE_LENGTH = 64
@@ -28,7 +28,7 @@ class MetaPermission(DateMixin):
         verbose_name_plural = 'Базовые разрешения ролей'
 
 
-class RolePermission(UserMixin, DateMixin):
+class RolePermission(DateMixin):
     """
     Модель разрешения, привязанного к роли
     """
