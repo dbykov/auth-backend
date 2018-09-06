@@ -30,6 +30,8 @@ def pytest_configure():
             'django.contrib.messages',
             'django.contrib.staticfiles',
 
+            'rest_framework_simplejwt.token_blacklist',
+
             'tests',
         ),
         PASSWORD_HASHERS=(
@@ -41,6 +43,23 @@ def pytest_configure():
             'django.contrib.auth.hashers.CryptPasswordHasher',
         ),
         AUTH_USER_MODEL='tests.TestUser',
+        AUTH_PASSWORD_VALIDATORS=[
+            {
+                'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',  # NOQA
+            },
+            {
+                'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',  # NOQA
+                'OPTIONS': {
+                    'min_length': 10,
+                }
+            },
+            {
+                'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',  # NOQA
+            },
+            {
+                'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',  # NOQA
+            },
+        ]
     )
 
     try:
