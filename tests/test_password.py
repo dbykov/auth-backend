@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
+from django.core import mail
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from rest_framework import status
@@ -103,6 +104,31 @@ class PasswordRecovery(APITestCase):
             'confirm_password': self._user.email,
         })
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_request_reset_password(self):
+        # указан валидный email
+        mail.outbox = []
+        response = self.client.post('/password/reset/', {
+            'email': 'username@example.com'
+        })
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(len(mail.outbox), 1)
+
+        # указан невалидный email
+        mail.outbox = []
+        response = self.client.post('/password/reset/', {
+            'email': 'username-example.com'
+        })
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(len(mail.outbox), 0)
+
+        # указан несуществующий email
+        mail.outbox = []
+        response = self.client.post('/password/reset/', {
+            'email': 'wrong@example.com'
+        })
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(len(mail.outbox), 0)
 
     def _make_token(self):
         # Токен генерируется на основе даты последнего входа юзера,
