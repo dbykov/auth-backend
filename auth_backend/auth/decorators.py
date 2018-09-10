@@ -1,8 +1,5 @@
 from typing import Type, List, Callable
 
-from django.http import HttpResponseNotAllowed
-from rest_framework.exceptions import PermissionDenied
-
 from auth_backend.permission.utils import (
     PERM_ADD, PERM_VIEW, PERM_EDIT,
     PERM_DELETE, PermissionRegistry)
@@ -47,57 +44,6 @@ def _wrap_method(cls, perm_code, method_name, verbose_name):
     :param method_name: Имя искомого метода-отображения
     :param verbose_name: Человекопонятное наименование для права
     """
-    def overrided_dispatch(self, request, *args, **kwargs):
-        """
-        Перекрытый метод dispatch из viewset
-        Добавлена передача ссылки на viewset в вызываемый метод.
-        Необходимость возникла в связи с тем,
-        что вызываемый метод оборачивается в WrappedMethod
-        и информация о родительском классе теряется
-        """
-
-        def method_not_allowed(*a, **kw):
-            return HttpResponseNotAllowed(self._allowed_methods())
-
-        def check_permission():
-            if not request.user.has_permission(wrapper.full_code):
-                raise PermissionDenied
-
-        self.args = args
-        self.kwargs = kwargs
-
-        request = self.initialize_request(request, *args, **kwargs)
-        self.request = request
-        self.headers = self.default_response_headers
-
-        try:
-            self.initial(request, *args, **kwargs)
-
-            name = request.method.lower()
-            handler = getattr(self, name, None)
-            if handler is None or name not in self.http_method_names:
-                handler = method_not_allowed
-
-            if hasattr(self, '_wrappers'):
-                wrapper = self._wrappers.get(handler.__name__)
-
-                if wrapper is not None:
-                    # Проверка наличия у пользователя разрешений
-                    check_permission()
-
-            response = handler(request, *args, **kwargs)
-
-        except Exception as exc:
-            response = self.handle_exception(exc)
-
-        self.response = self.finalize_response(
-            request, response, *args, **kwargs)
-
-        return self.response
-
-    # Переопределяем метод dispatch (возможно есть способ обойтись без этого?)
-    cls.dispatch = overrided_dispatch
-
     existed_method = getattr(cls, method_name, None)
     if existed_method is not None:
         wrapped_method = WrappedMethod(
