@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
 from django.core import mail
+from django.core.cache import cache
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from rest_framework import status
@@ -25,6 +26,7 @@ class PasswordRecovery(APITestCase):
         """
         Кейс: сброс пароля => задание нового пароля => аутентификация
         """
+        cache.clear()
         # Установка нового пароля
         response = self.client.put(f'/password/reset/', {
             'uidb64': self._uidb64,
@@ -50,6 +52,7 @@ class PasswordRecovery(APITestCase):
 
     def test_passwords_equality(self):
         # Новый пароль совпадает с подтверждением пароля
+        cache.clear()
         response = self.client.put(f'/password/reset/', {
             'uidb64': self._uidb64,
             'token': self._make_token(),
@@ -59,6 +62,7 @@ class PasswordRecovery(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
         # Новый пароль не совпадает с подтверждением пароля
+        cache.clear()
         response = self.client.put(f'/password/reset/', {
             'uidb64': self._uidb64,
             'token': self._make_token(),
@@ -69,6 +73,7 @@ class PasswordRecovery(APITestCase):
 
     def test_password_validation(self):
         # Длина пароля должна быть не менее 10 символов
+        cache.clear()
         response = self.client.put(f'/password/reset/', {
             'uidb64': self._uidb64,
             'token': self._make_token(),
@@ -78,6 +83,7 @@ class PasswordRecovery(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
         # пароль короче 10 символов
+        cache.clear()
         response = self.client.put(f'/password/reset/', {
             'uidb64': self._uidb64,
             'token': self._make_token(),
@@ -88,6 +94,7 @@ class PasswordRecovery(APITestCase):
 
         # Пароль может содержать латинские и кириллические буквы и цифры,
         # а также специальные символы.
+        cache.clear()
         response = self.client.put(f'/password/reset/', {
             'uidb64': self._uidb64,
             'token': self._make_token(),
@@ -97,6 +104,7 @@ class PasswordRecovery(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
         # Пароль не должен совпадать с e-mail.
+        cache.clear()
         response = self.client.put(f'/password/reset/', {
             'uidb64': self._uidb64,
             'token': self._make_token(),
@@ -108,6 +116,7 @@ class PasswordRecovery(APITestCase):
     def test_request_reset_password(self):
         # указан валидный email
         mail.outbox = []
+        cache.clear()
         response = self.client.post('/password/reset/', {
             'email': 'username@example.com'
         })
@@ -116,6 +125,7 @@ class PasswordRecovery(APITestCase):
 
         # указан невалидный email
         mail.outbox = []
+        cache.clear()
         response = self.client.post('/password/reset/', {
             'email': 'username-example.com'
         })
@@ -124,6 +134,7 @@ class PasswordRecovery(APITestCase):
 
         # указан несуществующий email
         mail.outbox = []
+        cache.clear()
         response = self.client.post('/password/reset/', {
             'email': 'wrong@example.com'
         })
@@ -131,6 +142,8 @@ class PasswordRecovery(APITestCase):
         self.assertEqual(len(mail.outbox), 0)
 
     def test_throttling_request_reset_password(self):
+        cache.clear()
+
         response = self.client.post('/password/reset/', {
             'email': 'username@example.com'
         })
