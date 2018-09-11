@@ -1,7 +1,10 @@
 """
 Базовая информация о разрешениях
 """
+import logging
 from typing import Iterator, KeysView, Dict
+
+log = logging.getLogger(__name__)
 
 #
 # Общие коды разрешений
@@ -29,6 +32,11 @@ class PermissionRegistry:
 
     @classmethod
     def add_code(cls, code: str, name: str):
+        if cls.__permission_codes.get(code, name) != name:
+            log.warning(
+                f'Код разрешения {code} уже зарегистрирован,'
+                f'но с другим именем "{cls.__permission_codes[code]}"')
+
         cls.__permission_codes[code] = name
 
     @classmethod
