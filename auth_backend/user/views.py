@@ -1,15 +1,22 @@
 from rest_framework import status
 from rest_framework.response import Response
+from rest_framework.throttling import UserRateThrottle
 from rest_framework.views import APIView
 
 from auth_backend.user.serializers import ChangePasswordSerializer, \
     RequestResetPasswordSerializer
 
 
+class ResetPasswordRateThrottle(UserRateThrottle):
+    rate = '1/min'
+
+
 class ResetPasswordView(APIView):
     """
     Сброс и установка нового пароля
     """
+    throttle_classes = (ResetPasswordRateThrottle,)
+
     def put(self, request, *args, **kwargs):
         """
         Изменение пароля
