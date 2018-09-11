@@ -1,28 +1,13 @@
 from rest_framework.serializers import ModelSerializer
 
-from auth_backend.permission.models import RolePermission, MetaPermission
+from auth_backend.permission.models import Permission
 
 
-class MetaPermissionSerializer(ModelSerializer):
+class PermissionSerializer(ModelSerializer):
     class Meta:
-        model = MetaPermission
+        model = Permission
         fields = (
             'id',
             'code',
             'name',
-        )
-
-
-class RolePermissionSerializer(ModelSerializer):
-    meta_permission = MetaPermissionSerializer()
-
-    class Meta:
-        model = RolePermission
-        fields = (
-            'id',
-            'code',
-            'name',
-            'meta_permission',
-            'organizations',
-            'author',
         )

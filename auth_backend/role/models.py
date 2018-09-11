@@ -15,7 +15,7 @@ class Role(DateMixin):
         max_length=200,
         verbose_name='Наименование роли')
     permissions = models.ManyToManyField(
-        to='permission.RolePermission',
+        to='permission.Permission',
         verbose_name='Список разрешений')
 
     def __str__(self):
