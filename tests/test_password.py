@@ -130,6 +130,18 @@ class PasswordRecovery(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(len(mail.outbox), 0)
 
+    def test_throttling_request_reset_password(self):
+        response = self.client.post('/password/reset/', {
+            'email': 'username@example.com'
+        })
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+        response = self.client.post('/password/reset/', {
+            'email': 'username@example.com'
+        })
+        self.assertEqual(response.status_code,
+                         status.HTTP_429_TOO_MANY_REQUESTS)
+
     def _make_token(self):
         # Токен генерируется на основе даты последнего входа юзера,
         # поэтому надо рефрешить объект юзера из бд
