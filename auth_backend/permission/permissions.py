@@ -23,6 +23,9 @@ class HasRolePermission(BasePermission):
         return self._check_permission(request, view)
 
     def _check_permission(self, request: Request, view: Any) -> bool:
+        if request.user.is_anonymous:
+            return False
+
         method_conformity = {
             'get': 'retrieve',
             'post': 'create',
