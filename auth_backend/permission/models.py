@@ -25,5 +25,3 @@ class Permission(DateMixin):
         db_table = 'permissions'
         verbose_name = 'Разрешение роли'
         verbose_name_plural = 'Разрешения ролей'
-
-
