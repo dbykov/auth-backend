@@ -25,3 +25,20 @@ class Permission(DateMixin):
         db_table = 'permissions'
         verbose_name = 'Разрешение роли'
         verbose_name_plural = 'Разрешения ролей'
+
+
+def create_or_update_permissions():
+    from .utils import PermissionRegistry
+    code2perm = {perm.code: perm for perm in Permission.objects.all()}
+    new_perms = []
+
+    for code in PermissionRegistry.codes():
+        perm = code2perm.get(code)
+        name = PermissionRegistry.name_by_code(code)
+        if perm and perm.name != name:
+            perm.name = name
+            perm.save()
+        elif perm is None:
+            new_perms.append(Permission(code=code, name=name))
+
+    Permission.objects.bulk_create(new_perms)
