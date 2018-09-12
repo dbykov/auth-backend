@@ -56,6 +56,17 @@ def _wrap_method(cls, perm_code, method_name, verbose_name):
 
         cls._wrappers[method_name] = wrapped_method
 
+        # Если в самом методе отсутствует документирование,
+        # то проставляем ему по наименованию права
+        if not existed_method.__doc__:
+            def _wrapper(*args, **kwargs):
+                return existed_method(*args, **kwargs)
+
+            _wrapper.__doc__ = f'{cls.verbose_name}:{verbose_name}'
+            _wrapper.__name__ = existed_method.__name__
+
+            setattr(cls, method_name, _wrapper)
+
         # Добавляем код и наименования разрешения в общий регистр,
         # чтобы при миграциях можно было создать недостающие записи
         PermissionRegistry.add_code(
