@@ -5,6 +5,8 @@ from rest_framework.test import APITestCase
 
 __all__ = ('TestAuthentication',)
 
+User = get_user_model()
+
 
 class TestAuthentication(APITestCase):
     """
@@ -12,7 +14,7 @@ class TestAuthentication(APITestCase):
     """
 
     def setUp(self):
-        self.user = get_user_model().objects.create_user(
+        self.user = User.objects.create_user(
             email='username@example.com',
             password='password',
         )
@@ -57,6 +59,18 @@ class TestAuthentication(APITestCase):
             self.client.post(
                 '/token/refresh/', tokens, format='json').status_code,
             status.HTTP_401_UNAUTHORIZED)
+
+    def test_last_login_changed(self):
+        # when: The User was created, but never logged in
+        user = User.objects.get(email='username@example.com')
+        # then:
+        self.assertIsNone(user.last_login)
+
+        # when:
+        self._auth_user()
+        # then:
+        user.refresh_from_db()
+        self.assertIsNotNone(user.last_login)
 
     def _auth_user(self) -> Response:
         return self.client.post('/token/', {
