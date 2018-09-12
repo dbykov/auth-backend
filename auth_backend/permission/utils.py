@@ -73,3 +73,21 @@ class PermissionRegistry:
         __import__(root_urls)
 
         cls.__populated = True
+
+
+def create_or_update_permissions():
+    from .models import Permission
+
+    code2perm = {perm.code: perm for perm in Permission.objects.all()}
+    new_perms = []
+
+    for code in PermissionRegistry.codes():
+        perm = code2perm.get(code)
+        name = PermissionRegistry.name_by_code(code)
+        if perm and perm.name != name:
+            perm.name = name
+            perm.save()
+        elif perm is None:
+            new_perms.append(Permission(code=code, name=name))
+
+    Permission.objects.bulk_create(new_perms)
