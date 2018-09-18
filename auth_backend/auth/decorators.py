@@ -93,20 +93,21 @@ def add_permissions(cls):
     assert getattr(cls, 'verbose_name', None), (
         'Необходимо указать атрибут verbose_name!')
 
-    crud_perms = (
-        (PERM_ADD, 'create', 'Создание'),
-        (PERM_VIEW, ('retrieve', 'list'), 'Просмотр'),
-        (PERM_EDIT, ('update', 'partial_update'), 'Редактирование'),
-        (PERM_DELETE, 'destroy', 'Удаление'),
-    )
+    if not getattr(cls, 'skip_crud_methods', False):
+        crud_perms = (
+            (PERM_ADD, 'create', 'Создание'),
+            (PERM_VIEW, ('retrieve', 'list'), 'Просмотр'),
+            (PERM_EDIT, ('update', 'partial_update'), 'Редактирование'),
+            (PERM_DELETE, 'destroy', 'Удаление'),
+        )
 
-    # Обработка базовых методов-отображений
-    for code, method_name, verbose_name in crud_perms:
-        if isinstance(method_name, (list, tuple)):
-            for name in method_name:
-                _wrap_method(cls, code, name, verbose_name)
-        else:
-            _wrap_method(cls, code, method_name, verbose_name)
+        # Обработка базовых методов-отображений
+        for code, method_name, verbose_name in crud_perms:
+            if isinstance(method_name, (list, tuple)):
+                for name in method_name:
+                    _wrap_method(cls, code, name, verbose_name)
+            else:
+                _wrap_method(cls, code, method_name, verbose_name)
 
     # Обработка кастомных методов-отображений,
     # помеченных декоратором permission_required
