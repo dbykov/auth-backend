@@ -32,12 +32,8 @@ class PermissionRegistry:
 
     @classmethod
     def add_code(cls, code: str, name: str):
-        if cls.__permission_codes.get(code, name) != name:
-            log.warning(
-                f'Код разрешения {code} уже зарегистрирован,'
-                f'но с другим именем "{cls.__permission_codes[code]}"')
-
-        cls.__permission_codes[code] = name
+        if code not in cls.__permission_codes:
+            cls.__permission_codes[code] = name
 
     @classmethod
     def codes(cls) -> KeysView:
