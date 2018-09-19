@@ -56,23 +56,24 @@ def _wrap_method(cls, perm_code, method_name, verbose_name):
 
         cls._wrappers[method_name] = wrapped_method
 
-        # Если в самом методе отсутствует документирование,
-        # то проставляем ему по наименованию права
-        if not existed_method.__doc__:
-            def _wrapper(*args, **kwargs):
-                return existed_method(*args, **kwargs)
+        if hasattr(cls, 'verbose_name'):
+            # Если в самом методе отсутствует документирование,
+            # то проставляем ему по наименованию права
+            if not existed_method.__doc__:
+                def _wrapper(*args, **kwargs):
+                    return existed_method(*args, **kwargs)
 
-            _wrapper.__doc__ = f'{cls.verbose_name}:{verbose_name}'
-            _wrapper.__name__ = existed_method.__name__
+                _wrapper.__doc__ = f'{cls.verbose_name}:{verbose_name}'
+                _wrapper.__name__ = existed_method.__name__
 
-            setattr(cls, method_name, _wrapper)
+                setattr(cls, method_name, _wrapper)
 
-        # Добавляем код и наименования разрешения в общий регистр,
-        # чтобы при миграциях можно было создать недостающие записи
-        PermissionRegistry.add_code(
-            code=f'{cls.name}:{perm_code}',
-            name=f'{cls.verbose_name}:{verbose_name}',
-        )
+            # Добавляем код и наименования разрешения в общий регистр,
+            # чтобы при миграциях можно было создать недостающие записи
+            PermissionRegistry.add_code(
+                code=f'{cls.name}:{perm_code}',
+                name=f'{cls.verbose_name}:{verbose_name}',
+            )
 
 
 def add_permissions(cls):
@@ -87,11 +88,6 @@ def add_permissions(cls):
     # к полному коду разрешения.
     assert getattr(cls, 'name', None) is not None, (
         'Необходимо указать атрибут name!')
-    # Проверка на наличие у viewset атрибута verbose_name.
-    # Значение данного атрибута используется в качестве части
-    # человекопонятного наименования разрешения.
-    assert getattr(cls, 'verbose_name', None), (
-        'Необходимо указать атрибут verbose_name!')
 
     if not getattr(cls, 'skip_crud_methods', False):
         crud_perms = (
@@ -120,7 +116,8 @@ def add_permissions(cls):
         is_wrapped = getattr(obj, 'is_wrapped', None)
 
         if obj is not None and is_wrapped is not None and not is_wrapped:
-            _wrap_method(cls, obj.permission_code, key, obj.verbose_name)
+            _wrap_method(cls, obj.permission_code, key,
+                         getattr(obj, 'verbose_name', None))
 
     return cls
 
