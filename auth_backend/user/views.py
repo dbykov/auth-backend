@@ -1,4 +1,5 @@
 from rest_framework import status
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.throttling import UserRateThrottle
 from rest_framework.views import APIView
@@ -16,6 +17,7 @@ class ResetPasswordView(APIView):
     Сброс и установка нового пароля
     """
     throttle_classes = (ResetPasswordRateThrottle,)
+    permission_classes = (AllowAny,)
 
     def put(self, request, *args, **kwargs):
         """
