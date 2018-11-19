@@ -1,6 +1,7 @@
 from django.contrib.auth import user_logged_in
 from rest_framework import permissions, status, views
 from rest_framework.exceptions import ValidationError
+from rest_framework.permissions import AllowAny
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework_simplejwt import authentication
@@ -40,6 +41,8 @@ class TokenObtainView(TokenObtainPairView):
     """
     Получение пары access и refresh токенов
     """
+    permission_classes = (AllowAny,)
+
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
 

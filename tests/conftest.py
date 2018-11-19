@@ -59,7 +59,13 @@ def pytest_configure():
             {
                 'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',  # NOQA
             },
-        ]
+        ],
+        REST_FRAMEWORK={
+            'DEFAULT_PERMISSION_CLASSES': (
+                'rest_framework.permissions.IsAuthenticated',
+                'auth_backend.permission.permissions.HasRolePermission',
+            ),
+        }
     )
 
     try:
