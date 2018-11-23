@@ -14,9 +14,8 @@ class ResetPasswordRateThrottle(UserRateThrottle):
 
 class ResetPasswordView(APIView):
     """
-    Сброс и установка нового пароля
+    Установка нового пароля
     """
-    throttle_classes = (ResetPasswordRateThrottle,)
     permission_classes = (AllowAny,)
 
     def put(self, request, *args, **kwargs):
@@ -29,10 +28,15 @@ class ResetPasswordView(APIView):
             return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+class RequestResetPasswordView(APIView):
+    """
+    Запрос на сброс пароля
+    """
+    permission_classes = (AllowAny,)
+    throttle_classes = (ResetPasswordRateThrottle,)
+
     def post(self, request, *args, **kwargs):
-        """
-        Запрос на сброс пароля
-        """
         serializer = RequestResetPasswordSerializer(data=request.data)
         if serializer.is_valid():
             serializer.send()

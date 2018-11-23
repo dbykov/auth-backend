@@ -117,7 +117,7 @@ class PasswordRecovery(APITestCase):
         # указан валидный email
         mail.outbox = []
         cache.clear()
-        response = self.client.post('/password/reset/', {
+        response = self.client.post('/password/requestreset/', {
             'email': 'username@example.com'
         })
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
@@ -126,7 +126,7 @@ class PasswordRecovery(APITestCase):
         # указан невалидный email
         mail.outbox = []
         cache.clear()
-        response = self.client.post('/password/reset/', {
+        response = self.client.post('/password/requestreset/', {
             'email': 'username-example.com'
         })
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -135,7 +135,7 @@ class PasswordRecovery(APITestCase):
         # указан несуществующий email
         mail.outbox = []
         cache.clear()
-        response = self.client.post('/password/reset/', {
+        response = self.client.post('/password/requestreset/', {
             'email': 'wrong@example.com'
         })
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -144,12 +144,12 @@ class PasswordRecovery(APITestCase):
     def test_throttling_request_reset_password(self):
         cache.clear()
 
-        response = self.client.post('/password/reset/', {
+        response = self.client.post('/password/requestreset/', {
             'email': 'username@example.com'
         })
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
-        response = self.client.post('/password/reset/', {
+        response = self.client.post('/password/requestreset/', {
             'email': 'username@example.com'
         })
         self.assertEqual(response.status_code,
