@@ -3,7 +3,7 @@ from rest_framework_simplejwt.views import TokenRefreshView
 
 from auth_backend.auth.views import (
     RefreshTokenBlacklistView, TokenObtainView)
-from auth_backend.user.views import ResetPasswordView
+from auth_backend.user.views import ResetPasswordView, RequestResetPasswordView
 
 urlpatterns = [
     path('/', include('rest_framework.urls', namespace='rest_framework')),
@@ -12,4 +12,5 @@ urlpatterns = [
     path('token/refresh/', TokenRefreshView.as_view()),
 
     path('password/reset/', ResetPasswordView.as_view()),
+    path('password/requestreset/', RequestResetPasswordView.as_view()),
 ]
