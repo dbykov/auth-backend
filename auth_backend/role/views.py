@@ -7,7 +7,7 @@ from auth_backend.role.models import Role
 
 @add_permissions
 class RoleViewSet(ModelViewSet):
-    name = 'role'
+    permission_group = 'role'
     verbose_name = 'Роли пользователей'
     queryset = Role.objects.all()
     serializer_class = RoleSerializer

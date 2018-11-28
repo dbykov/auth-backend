@@ -7,7 +7,7 @@ from auth_backend.permission.serializers import PermissionSerializer
 
 @add_permissions
 class PermissionViewSet(ModelViewSet):
-    name = 'permission'
+    permission_group = 'permission'
     verbose_name = 'Разрешение роли'
     queryset = Permission.objects.all()
     serializer_class = PermissionSerializer
