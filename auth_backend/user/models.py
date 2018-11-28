@@ -1,6 +1,7 @@
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.db import models
 
+from auth_backend.role.models import Role
 from auth_backend.user.enums import Gender
 
 
@@ -36,8 +37,11 @@ class User(AbstractBaseUser):
     """
     Модель пользователя системы
     """
-    # Необходимо перекрыть в дочерних моделях
-    roles = None
+    roles = models.ManyToManyField(
+        Role,
+        verbose_name='Роли',
+        related_name='users',
+        blank=True)
 
     is_superuser = models.BooleanField(
         verbose_name='Superuser status',
