@@ -13,7 +13,7 @@ class WrappedMethod:
     а также кода разрешения.
     Добавляет при вызове обернутого метода проверку на наличие прав
     """
-    name = None
+    permission_group = None
     # Базовый код разрешения для данного конкретного метода
     permission_code = None
     # Человекопонятное наименование разрешения
@@ -21,8 +21,8 @@ class WrappedMethod:
     # Признак, что указанный метод уже был декорирован
     is_wrapped = True
 
-    def __init__(self, viewset_name, permission_code, verbose_name):
-        self.name = viewset_name
+    def __init__(self, permission_group, permission_code, verbose_name):
+        self.permission_group = permission_group
         self.permission_code = permission_code
         self.verbose_name = verbose_name
 
@@ -31,7 +31,7 @@ class WrappedMethod:
         """
         Полный код разрешения
         """
-        return f'{self.name}:{self.permission_code}'
+        return f'{self.permission_group}:{self.permission_code}'
 
 
 def _wrap_method(cls, perm_code, method_name, verbose_name):
@@ -47,7 +47,7 @@ def _wrap_method(cls, perm_code, method_name, verbose_name):
     existed_method = getattr(cls, method_name, None)
     if existed_method is not None:
         wrapped_method = WrappedMethod(
-            viewset_name=cls.name,
+            permission_group=cls.permission_group,
             permission_code=perm_code,
             verbose_name=verbose_name)
 
@@ -71,7 +71,7 @@ def _wrap_method(cls, perm_code, method_name, verbose_name):
             # Добавляем код и наименования разрешения в общий регистр,
             # чтобы при миграциях можно было создать недостающие записи
             PermissionRegistry.add_code(
-                code=f'{cls.name}:{perm_code}',
+                code=f'{cls.permission_group}:{perm_code}',
                 name=f'{cls.verbose_name}:{verbose_name}',
             )
 
@@ -83,11 +83,11 @@ def add_permissions(cls):
     Также ищет помеченные декоратором permission_required
     и добавляет поддержку прав.
     """
-    # Проверка на наличие у viewset атрибутa name.
+    # Проверка на наличие у viewset атрибутa permission_group.
     # Значение данного атрибута используется в качестве префикса
     # к полному коду разрешения.
-    assert getattr(cls, 'name', None) is not None, (
-        'Необходимо указать атрибут name!')
+    assert getattr(cls, 'permission_group', None) is not None, (
+        'Необходимо указать атрибут permission_group!')
 
     if not getattr(cls, 'skip_crud_methods', False):
         crud_perms = (
