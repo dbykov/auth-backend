@@ -19,7 +19,7 @@ class Permission(DateMixin):
         verbose_name='Наименование разрешения')
 
     def __str__(self):
-        return f'{self.id}: {self.name} ({self.code})'
+        return f'{self.pk}: {self.name} ({self.code})'
 
     class Meta:
         db_table = 'permissions'
