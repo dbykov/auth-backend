@@ -8,7 +8,7 @@ class DateMixin(models.Model):
     created_at = models.DateTimeField(
         auto_now_add=True,
         verbose_name='Дата и время создания записи')
-    changed_at = models.DateTimeField(
+    updated_at = models.DateTimeField(
         auto_now=True,
         verbose_name='Дата и время изменения записи')
 

@@ -19,7 +19,7 @@ class Role(DateMixin):
         verbose_name='Список разрешений')
 
     def __str__(self):
-        return f'{self.id}: {self.name}'
+        return f'{self.pk}: {self.name}'
 
     class Meta:
         db_table = 'roles'
