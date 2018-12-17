@@ -74,7 +74,9 @@ class RolesViewSet(viewsets.ModelViewSet):
     verbose_name = 'Роли пользователей'
 
     serializer_class = serializers.FullRoleSerializer
-    queryset = Role.objects.all().prefetch_related('permissions')
+    queryset = Role.objects.all().prefetch_related('permissions').exclude(
+        code__in=READONLY_ROLE_CODES
+    )
 
     def perform_destroy(self, instance: Role):
         if instance.code in READONLY_ROLE_CODES:
