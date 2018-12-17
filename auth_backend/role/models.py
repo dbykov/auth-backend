@@ -25,3 +25,4 @@ class Role(DateMixin):
         db_table = 'roles'
         verbose_name = 'Роль пользователя'
         verbose_name_plural = 'Роли пользователей'
+        ordering = ('-id', )

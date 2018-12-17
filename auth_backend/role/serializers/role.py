@@ -42,7 +42,7 @@ class FlatRoleSerializer(serializers.Serializer):
     def to_representation(self, instance: Role) -> int:
         return instance.id
 
-    def to_internal_value(self, role_id: int) -> Permission:
+    def to_internal_value(self, role_id: int) -> Role:
         try:
             return Role.objects.get(id=role_id)
         except Role.DoesNotExist:
