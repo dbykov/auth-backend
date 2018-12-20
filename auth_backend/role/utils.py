@@ -1,9 +1,7 @@
 from typing import List, Iterable
 
-from auth_backend.auth.decorators import permission_required
 from auth_backend.permission.models import Permission
-from auth_backend.permission.utils import PermissionRegistry, PERM_VIEW, \
-    PERM_DELETE, PERM_ADD, PERM_EDIT
+from auth_backend.permission.utils import PermissionRegistry
 from auth_backend.role.models import Role
 
 __all__ = (
@@ -17,10 +15,6 @@ __all__ = (
     'ADMINISTRATOR_ROLE_CODE',
     'READONLY_ROLE_CODES',
 
-    'perm_view_required',
-    'perm_delete_required',
-    'perm_edit_required',
-    'perm_add_required',
 )
 
 
@@ -73,19 +67,3 @@ def iter_permissions(codes: List[str] = None) -> Iterable[Role]:
     if codes is None:
         codes = PermissionRegistry.codes()
     return iter(Permission.objects.filter(code__in=codes))
-
-
-def perm_view_required(func):
-    return permission_required(PERM_VIEW, 'Просмотр')(func)
-
-
-def perm_delete_required(func):
-    return permission_required(PERM_DELETE, 'Удаление')(func)
-
-
-def perm_add_required(func):
-    return permission_required(PERM_ADD, 'Создание')(func)
-
-
-def perm_edit_required(func):
-    return permission_required(PERM_EDIT, 'Редактирование')(func)

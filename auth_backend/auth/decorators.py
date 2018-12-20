@@ -1,5 +1,8 @@
-from typing import Type, List, Callable
+from typing import Type
 
+from django.db.models import Q
+
+from auth_backend.permission.models import Permission
 from auth_backend.permission.utils import (
     PERM_ADD, PERM_VIEW, PERM_EDIT,
     PERM_DELETE, PermissionRegistry)
@@ -13,7 +16,7 @@ class WrappedMethod:
     а также кода разрешения.
     Добавляет при вызове обернутого метода проверку на наличие прав
     """
-    permission_group = None
+    namespace = None
     # Базовый код разрешения для данного конкретного метода
     permission_code = None
     # Человекопонятное наименование разрешения
@@ -21,20 +24,33 @@ class WrappedMethod:
     # Признак, что указанный метод уже был декорирован
     is_wrapped = True
 
-    def __init__(self, permission_group, permission_code, verbose_name):
-        self.permission_group = permission_group
+    def __init__(self, namespace, permission_code, verbose_name):
+        self.namespace = namespace
         self.permission_code = permission_code
         self.verbose_name = verbose_name
 
-    @property
-    def full_code(self):
+    def full_code(self, namespace):
         """
         Полный код разрешения
         """
-        return f'{self.permission_group}:{self.permission_code}'
+        return f'{namespace}:{self.permission_code}'
+
+    @property
+    def permissions(self):
+        qfilter = Permission.objects.none()
+
+        if isinstance(self.namespace, str):
+            qfilter = Q(code=self.full_code(self.namespace))
+        elif isinstance(self.namespace, (list, tuple)):
+            qfilter = Q()
+            for space in self.namespace:
+                qfilter |= Q(code=self.full_code(space))
+
+        return Permission.objects.filter(qfilter)
 
 
-def _wrap_method(cls, perm_code, method_name, verbose_name):
+def _wrap_method(cls, namespace, resource_name,
+                 perm_code, method_name, verbose_name):
     """
     Оборачивание метода с указанным наименованием
     в указанном классе для добавления поддержки системы ролей
@@ -47,7 +63,7 @@ def _wrap_method(cls, perm_code, method_name, verbose_name):
     existed_method = getattr(cls, method_name, None)
     if existed_method is not None:
         wrapped_method = WrappedMethod(
-            permission_group=cls.permission_group,
+            namespace=namespace,
             permission_code=perm_code,
             verbose_name=verbose_name)
 
@@ -56,95 +72,62 @@ def _wrap_method(cls, perm_code, method_name, verbose_name):
 
         cls._wrappers[method_name] = wrapped_method
 
-        if hasattr(cls, 'verbose_name'):
-            # Если в самом методе отсутствует документирование,
-            # то проставляем ему по наименованию права
-            if not existed_method.__doc__:
-                def _wrapper(*args, **kwargs):
-                    return existed_method(*args, **kwargs)
+        # Если в самом методе отсутствует документирование,
+        # то проставляем ему по наименованию права
+        if not existed_method.__doc__:
+            def _wrapper(*args, **kwargs):
+                return existed_method(*args, **kwargs)
 
-                _wrapper.__doc__ = f'{cls.verbose_name}:{verbose_name}'
-                _wrapper.__name__ = existed_method.__name__
+            _wrapper.__doc__ = f'{resource_name}:{verbose_name}'
+            _wrapper.__name__ = existed_method.__name__
 
-                setattr(cls, method_name, _wrapper)
+            setattr(cls, method_name, _wrapper)
 
+        if resource_name and isinstance(namespace, str):
             # Добавляем код и наименования разрешения в общий регистр,
             # чтобы при миграциях можно было создать недостающие записи
             PermissionRegistry.add_code(
-                code=f'{cls.permission_group}:{perm_code}',
-                name=f'{cls.verbose_name}:{verbose_name}',
+                code=f'{namespace}:{perm_code}',
+                name=f'{resource_name}:{verbose_name}',
             )
 
 
-def add_permissions(cls):
+def add_permissions(namespace, resource_name=None, extra_actions=None):
     """
     Обертка над классом-viewset
     Ищет базовый список методов по CRUD, добавляет каждому проверку прав
-    Также ищет помеченные декоратором permission_required
-    и добавляет поддержку прав.
     """
-    # Проверка на наличие у viewset атрибутa permission_group.
-    # Значение данного атрибута используется в качестве префикса
-    # к полному коду разрешения.
-    assert getattr(cls, 'permission_group', None) is not None, (
-        'Необходимо указать атрибут permission_group!')
+    def wrapper(cls: Type):
+        assert namespace is not None, (
+            f'Необходимо передать namespace в '
+            f'add_permissions для {cls.__name__}!')
 
-    if not getattr(cls, 'skip_crud_methods', False):
-        crud_perms = (
-            (PERM_ADD, 'create', 'Создание'),
-            (PERM_VIEW, ('retrieve', 'list'), 'Просмотр'),
-            (PERM_EDIT, ('update', 'partial_update'), 'Редактирование'),
-            (PERM_DELETE, 'destroy', 'Удаление'),
-        )
+        if not getattr(cls, 'skip_crud_methods', False):
+            crud_perms = (
+                (PERM_ADD, 'create', 'Создание'),
+                (PERM_VIEW, ('retrieve', 'list'), 'Просмотр'),
+                (PERM_EDIT, ('update', 'partial_update'), 'Редактирование'),
+                (PERM_DELETE, 'destroy', 'Удаление'),
+            )
 
-        # Обработка базовых методов-отображений
-        for code, method_name, verbose_name in crud_perms:
-            if isinstance(method_name, (list, tuple)):
-                for name in method_name:
-                    _wrap_method(cls, code, name, verbose_name)
-            else:
-                _wrap_method(cls, code, method_name, verbose_name)
+            # Обработка базовых методов-отображений
+            for code, method_names, verbose_name in crud_perms:
+                if isinstance(method_names, (list, tuple)):
+                    for method_name in method_names:
+                        _wrap_method(cls, namespace, resource_name,
+                                     code, method_name, verbose_name)
+                else:
+                    _wrap_method(cls, namespace, resource_name,
+                                 code, method_names, verbose_name)
 
-    # Обработка кастомных методов-отображений,
-    # помеченных декоратором permission_required
-    keys = list(cls.__dict__.keys())
-    for key in keys:
-        if key.startswith('__'):
-            continue
+        if extra_actions:
+            assert isinstance(extra_actions, dict), (
+                'extra_actions must be dict')
 
-        obj = getattr(cls, key, None)
-        is_wrapped = getattr(obj, 'is_wrapped', None)
-
-        if obj is not None and is_wrapped is not None and not is_wrapped:
-            _wrap_method(cls, obj.permission_code, key,
-                         getattr(obj, 'verbose_name', None))
-
-    return cls
-
-
-def extend_permission_classes(*permission_classes: List[Type[object]]):
-    """
-    Расширяем список классов с проверкой разрешений
-    """
-    def wrapper(cls):
-        cls.permission_classes = (
-            cls.permission_classes + list(permission_classes))
+            for action, (code, verbose_name) in extra_actions.items():
+                _wrap_method(cls, namespace, resource_name,
+                             code, action, verbose_name)
 
         return cls
+
     return wrapper
-
-
-def permission_required(perm_code: str, verbose_name: str) -> Callable:
-    """
-    Добавление требования определенного кода разрешение для данного действия
-
-    :param perm_code: Код разрешения
-    :param verbose_name: Наименование разрешения
-    """
-    def outer(view):
-        view.permission_code = perm_code
-        view.verbose_name = verbose_name
-        view.is_wrapped = False
-
-        return view
-    return outer

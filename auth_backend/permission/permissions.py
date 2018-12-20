@@ -36,9 +36,9 @@ class HasRolePermission(BasePermission):
 
         result = False
         # Если декоратор `add_permissions` не используется,
-        # то доступ всегда разрешен
+        # то доступ всегда запрещен
         if not hasattr(view, '_wrappers'):
-            return True
+            return False
 
         method = request.method.lower()
         wrapper_data = view._wrappers.get(method)
@@ -50,7 +50,7 @@ class HasRolePermission(BasePermission):
         if wrapper_data is None:
             result = True
         # Проверка ролей пользователя
-        elif request.user.has_permission(wrapper_data.full_code):
+        elif request.user.has_permission(wrapper_data.permissions):
             result = True
 
         return result
