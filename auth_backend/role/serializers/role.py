@@ -43,10 +43,13 @@ class FlatRoleSerializer(serializers.Serializer):
         return instance.id
 
     def to_internal_value(self, role_id: int) -> Role:
-        try:
-            return Role.objects.get(id=role_id)
-        except Role.DoesNotExist:
-            raise exceptions.NotFound(code='roleNotFound')
+        if isinstance(role_id, int):
+            try:
+                return Role.objects.get(id=role_id)
+            except Role.DoesNotExist:
+                raise exceptions.NotFound(code='roleNotFound')
+        elif isinstance(role_id, dict):
+            return super().to_internal_value(role_id)
 
     class Meta:
         list_serializer_class = FlatRoleListSerialzer
