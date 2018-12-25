@@ -23,32 +23,26 @@ class HasRolePermission(BasePermission):
         return self._check_permission(request, view)
 
     def _check_permission(self, request: Request, view: Any) -> bool:
-        if request.user.is_anonymous:
-            return False
-
-        method_conformity = {
-            'get': 'retrieve',
-            'post': 'create',
-            'put': 'update',
-            'patch': 'partial_update',
-            'delete': 'destroy',
-        }
-
         result = False
         # Если декоратор `add_permissions` не используется,
         # то доступ всегда запрещен
         if not hasattr(view, '_wrappers'):
             return False
 
-        method = request.method.lower()
-        wrapper_data = view._wrappers.get(method)
-        if wrapper_data is None and method in method_conformity:
-            wrapper_data = view._wrappers.get(method_conformity[method])
+        if hasattr(view, 'action'):
+            wrapper_data = view._wrappers.get(view.action)
+        else:
+            method = request.method.lower()
+            wrapper_data = view._wrappers.get(method)
 
         # Если данный конкретный метод не обернут декоратором,
-        # то доступ разрешен
+        # то доступ запрещен
         if wrapper_data is None:
+            result = False
+        elif wrapper_data.is_public:
             result = True
+        elif request.user.is_anonymous:
+            result = False
         # Проверка ролей пользователя
         elif request.user.has_permission(wrapper_data.permissions):
             result = True

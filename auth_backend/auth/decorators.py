@@ -1,6 +1,7 @@
 from typing import Type
 
 from django.db.models import Q
+from rest_framework.viewsets import ViewSetMixin
 
 from auth_backend.permission.models import Permission
 from auth_backend.permission.utils import (
@@ -23,11 +24,14 @@ class WrappedMethod:
     verbose_name = None
     # Признак, что указанный метод уже был декорирован
     is_wrapped = True
+    # Признак того, что метод является публичным и права проверять не нужно
+    is_public = False
 
-    def __init__(self, namespace, permission_code, verbose_name):
+    def __init__(self, namespace, permission_code, verbose_name, is_public):
         self.namespace = namespace
         self.permission_code = permission_code
         self.verbose_name = verbose_name
+        self.is_public = is_public
 
     def full_code(self, namespace):
         """
@@ -50,7 +54,7 @@ class WrappedMethod:
 
 
 def _wrap_method(cls, namespace, resource_name,
-                 perm_code, method_name, verbose_name):
+                 perm_code, method_name, verbose_name, is_public=False):
     """
     Оборачивание метода с указанным наименованием
     в указанном классе для добавления поддержки системы ролей
@@ -65,23 +69,13 @@ def _wrap_method(cls, namespace, resource_name,
         wrapped_method = WrappedMethod(
             namespace=namespace,
             permission_code=perm_code,
-            verbose_name=verbose_name)
+            verbose_name=verbose_name,
+            is_public=is_public)
 
         if not hasattr(cls, '_wrappers'):
             cls._wrappers = {}
 
         cls._wrappers[method_name] = wrapped_method
-
-        # Если в самом методе отсутствует документирование,
-        # то проставляем ему по наименованию права
-        if not existed_method.__doc__:
-            def _wrapper(*args, **kwargs):
-                return existed_method(*args, **kwargs)
-
-            _wrapper.__doc__ = f'{resource_name}:{verbose_name}'
-            _wrapper.__name__ = existed_method.__name__
-
-            setattr(cls, method_name, _wrapper)
 
         if resource_name and isinstance(namespace, str):
             # Добавляем код и наименования разрешения в общий регистр,
@@ -92,33 +86,42 @@ def _wrap_method(cls, namespace, resource_name,
             )
 
 
-def add_permissions(namespace, resource_name=None, extra_actions=None):
+def add_permissions(namespace, resource_name=None, extra_actions=None,
+                    public_methods=None):
     """
     Обертка над классом-viewset
     Ищет базовый список методов по CRUD, добавляет каждому проверку прав
     """
+    public_methods = public_methods or ()
+
     def wrapper(cls: Type):
         assert namespace is not None, (
             f'Необходимо передать namespace в '
             f'add_permissions для {cls.__name__}!')
 
-        if not getattr(cls, 'skip_crud_methods', False):
+        if issubclass(cls, ViewSetMixin):
             crud_perms = (
+                (PERM_VIEW, 'list', 'Просмотр'),
+                (PERM_VIEW, 'retrieve', 'Просмотр'),
                 (PERM_ADD, 'create', 'Создание'),
-                (PERM_VIEW, ('retrieve', 'list'), 'Просмотр'),
-                (PERM_EDIT, ('update', 'partial_update'), 'Редактирование'),
+                (PERM_EDIT, 'update', 'Редактирование'),
+                (PERM_EDIT, 'partial_update', 'Редактирование'),
                 (PERM_DELETE, 'destroy', 'Удаление'),
             )
+        else:
+            crud_perms = (
+                (PERM_VIEW, 'get', 'Просмотр'),
+                (PERM_ADD, 'post', 'Создание'),
+                (PERM_EDIT, 'put', 'Редактирование'),
+                (PERM_EDIT, 'patch', 'Редактирование'),
+                (PERM_DELETE, 'delete', 'Удаление'),
+            )
 
-            # Обработка базовых методов-отображений
-            for code, method_names, verbose_name in crud_perms:
-                if isinstance(method_names, (list, tuple)):
-                    for method_name in method_names:
-                        _wrap_method(cls, namespace, resource_name,
-                                     code, method_name, verbose_name)
-                else:
-                    _wrap_method(cls, namespace, resource_name,
-                                 code, method_names, verbose_name)
+        # Обработка базовых методов-отображений
+        for code, method_names, verbose_name in crud_perms:
+            _wrap_method(cls, namespace, resource_name,
+                         code, method_names, verbose_name,
+                         is_public=method_names in public_methods)
 
         if extra_actions:
             assert isinstance(extra_actions, dict), (
@@ -126,7 +129,8 @@ def add_permissions(namespace, resource_name=None, extra_actions=None):
 
             for action, (code, verbose_name) in extra_actions.items():
                 _wrap_method(cls, namespace, resource_name,
-                             code, action, verbose_name)
+                             code, action, verbose_name,
+                             is_public=action in public_methods)
 
         return cls
 
