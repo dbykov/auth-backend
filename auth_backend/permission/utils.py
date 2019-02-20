@@ -12,12 +12,20 @@ log = logging.getLogger(__name__)
 
 # Разрешение на редактирование
 PERM_EDIT = 'edit'
+PERM_EDIT_DEFAULT = (PERM_EDIT, 'Редактирование')
+
 # Разрешение на просмотр (одного объекта или списка)
 PERM_VIEW = 'view'
+PERM_VIEW_DEFAULT = (PERM_VIEW, 'Просмотр')
+
 # Разрешение на удаление
 PERM_DELETE = 'delete'
+PERM_DELETE_DEFAULT = (PERM_DELETE, 'Удаление')
+
 # Разрешение на добавление новой записи
 PERM_ADD = 'add'
+PERM_ADD_DEFAULT = (PERM_ADD, 'Создание')
+
 
 # Общий список базовых (CRUD) разрешений
 BASE_PERMS = (PERM_EDIT, PERM_VIEW, PERM_DELETE, PERM_ADD)
