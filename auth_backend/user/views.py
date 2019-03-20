@@ -37,7 +37,8 @@ class RequestResetPasswordView(APIView):
     throttle_classes = (ResetPasswordRateThrottle,)
 
     def post(self, request, *args, **kwargs):
-        serializer = RequestResetPasswordSerializer(data=request.data)
+        serializer = RequestResetPasswordSerializer(
+            data=request.data, context={"request": request})
         if serializer.is_valid():
             serializer.send()
             return Response(status=status.HTTP_204_NO_CONTENT)
