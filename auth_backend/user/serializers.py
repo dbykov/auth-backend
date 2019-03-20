@@ -1,10 +1,10 @@
 from django.contrib.auth import get_user_model, password_validation
 from django.contrib.auth.tokens import default_token_generator
-from django.core import mail
 from django.core.exceptions import ValidationError
-from django.utils.encoding import force_bytes
-from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
+from django.utils.http import urlsafe_base64_decode
 from rest_framework import serializers
+
+from auth_backend.user.helpers import send_resetpassword_email
 
 UserModel = get_user_model()
 
@@ -86,13 +86,4 @@ class RequestResetPasswordSerializer(serializers.Serializer):
         return user
 
     def send(self):
-        uidb64 = urlsafe_base64_encode(force_bytes(self._user.pk)).decode()
-        token = default_token_generator.make_token(self._user)
-        # TODO (dbykov) тут отправляется ссылка на почту,
-        # TODO в каком виде она будет пока не ясно,
-        # TODO так как она ведет на фронт
-        mail.send_mail(
-            'Восстановление пароля', f'uidb64: {uidb64}; token: {token}',
-            'from@example.com', [self._user.email],
-            fail_silently=False,
-        )
+        send_resetpassword_email(self.context.get("request"), self._user)

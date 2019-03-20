@@ -81,5 +81,10 @@ class User(AbstractBaseUser):
 
         return f'{self.id}: {username}'
 
+    def get_full_name(self):
+        username = getattr(self, self.USERNAME_FIELD, '')
+
+        return username
+
     class Meta:
         abstract = True
