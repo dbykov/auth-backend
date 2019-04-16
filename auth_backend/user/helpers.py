@@ -41,3 +41,25 @@ def send_resetpassword_email(request: Request, user: User):
     mail.send_mail(
         subject, text_content, from_email, [user.email],
         fail_silently=False, html_message=html_content)
+
+
+def send_successful_registration_email(request: Request, user: User):
+    project_name = getattr(settings, 'PROJECT_NAME')
+    project_email = getattr(settings, 'FROM_EMAIL')
+
+    from_email = f'{project_name} <{project_email}>'
+
+    subject = 'Re: Регистрация в системе'
+
+    url = request.build_absolute_uri('/')
+    text_template = get_template('user/successful_registration.txt')
+    html_template = get_template('user/successful_registration.html')
+
+    context = {'full_name': user.get_full_name(),
+               'hyperlink': mark_safe(url)}
+    text_content = text_template.render(context)
+    html_content = html_template.render(context)
+
+    mail.send_mail(
+        subject, text_content, from_email, [user.email],
+        fail_silently=False, html_message=html_content)

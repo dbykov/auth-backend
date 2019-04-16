@@ -22,7 +22,8 @@ class ResetPasswordView(APIView):
         """
         Изменение пароля
         """
-        serializer = ChangePasswordSerializer(data=request.data)
+        serializer = ChangePasswordSerializer(
+            data=request.data, context={"request": request})
         if serializer.is_valid():
             serializer.save()
             return Response(status=status.HTTP_204_NO_CONTENT)

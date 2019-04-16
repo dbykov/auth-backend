@@ -1,0 +1,29 @@
+<html>
+<head>
+    <style>
+        a.button {
+            -webkit-appearance: button;
+            -moz-appearance: button;
+            appearance: button;
+
+            text-decoration: none;
+            color: initial;
+        }
+    </style>
+</head>
+<body>
+<h1>Регистрация</h1>
+
+<p>Здравствуйте, {{ full_name }}.</p>
+<p>Спасибо за регистрацию в системе "Комплексное управление отходами"!</p>
+
+<a class="button" href="{{ hyperlink }}">Перейти в систему</a>
+
+<p>или пройдите по ссылке</p>
+
+<a href="{{ hyperlink }}">{{ hyperlink }}</a>
+
+<p>Желаем Вам успешной работы!</p>
+<p>Ссылка действительна в течение 24 часов с момента отправки письма</p>
+</body>
+</html>

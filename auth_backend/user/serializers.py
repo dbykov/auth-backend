@@ -4,7 +4,8 @@ from django.core.exceptions import ValidationError
 from django.utils.http import urlsafe_base64_decode
 from rest_framework import serializers
 
-from auth_backend.user.helpers import send_resetpassword_email
+from auth_backend.user.helpers import (
+    send_resetpassword_email, send_successful_registration_email)
 
 UserModel = get_user_model()
 
@@ -47,7 +48,9 @@ class ChangePasswordSerializer(serializers.Serializer):
         self._user.set_password(self.validated_data.get('new_password'))
         self._user.email_verified = True
         self._user.save()
-
+        if not self._user.last_login:
+            send_successful_registration_email(
+                self.context["request"], self._user)
         return self._user
 
     def _get_user(self):
