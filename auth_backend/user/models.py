@@ -50,6 +50,10 @@ class User(AbstractBaseUser):
     email = models.EmailField(
         verbose_name='Эл.почта',
         unique=True)
+    email_verified = models.BooleanField(
+        verbose_name="Эл.почта подтверждена",
+        default=False)
+
     is_active = models.BooleanField(
         verbose_name='Активный',
         default=True)

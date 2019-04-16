@@ -11,9 +11,9 @@ from auth_backend.user.models import User
 
 
 def send_resetpassword_email(request: Request, user: User):
-    uidb64 = urlsafe_base64_encode(force_bytes(user.pk)).decode()
+    uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
     token = default_token_generator.make_token(user)
-    email64 = urlsafe_base64_encode(force_bytes(user.email)).decode()
+    email64 = urlsafe_base64_encode(force_bytes(user.email))
 
     url_pattern = getattr(
         settings, 'RESET_PASSWORD_URL',
