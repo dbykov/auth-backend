@@ -26,6 +26,7 @@ class PasswordRecovery(APITestCase):
         Кейс: сброс пароля => задание нового пароля => аутентификация
         """
         # setup:
+        mail.outbox.clear()
         cache.clear()
         self._user.email_verified = False
         self._user.save()
@@ -43,6 +44,9 @@ class PasswordRecovery(APITestCase):
         self._user.refresh_from_db()
         self.assertTrue(self._user.email_verified)
 
+        # Должно прийти письмо об успешной регистрации
+        self.assertEqual(len(mail.outbox), 1)
+
         # Аутентификация с новыми кредами должна пройти
         response = self.client.post('/token/', {
             "email": 'username@example.com',
@@ -56,6 +60,19 @@ class PasswordRecovery(APITestCase):
             "password": 'password'
         }, format='json')
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+        # Пользователь решил сменить пароль
+        mail.outbox.clear()
+        response = self.client.put(f'/password/reset/', {
+            'uidb64': self._uidb64,
+            'token': self._make_token(),
+            'new_password': 'absolutely_new_password',
+            'confirm_password': 'absolutely_new_password',
+        })
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+        # Письмо об успешной регистрации не приходит
+        self.assertEqual(len(mail.outbox), 0)
 
     def test_passwords_equality(self):
         # Новый пароль совпадает с подтверждением пароля
