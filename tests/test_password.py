@@ -19,22 +19,29 @@ class PasswordRecovery(APITestCase):
             email='username@example.com',
             password='password',
         )
-        self._uidb64 = urlsafe_base64_encode(
-            force_bytes(self._user.pk)).decode()
+        self._uidb64 = urlsafe_base64_encode(force_bytes(self._user.pk))
 
     def test_reset_password(self):
         """
         Кейс: сброс пароля => задание нового пароля => аутентификация
         """
+        # setup:
         cache.clear()
-        # Установка нового пароля
+        self._user.email_verified = False
+        self._user.save()
+
+        # when: Установка нового пароля
         response = self.client.put(f'/password/reset/', {
             'uidb64': self._uidb64,
             'token': self._make_token(),
             'new_password': 'new_password',
             'confirm_password': 'new_password',
         })
+
+        # then:
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self._user.refresh_from_db()
+        self.assertTrue(self._user.email_verified)
 
         # Аутентификация с новыми кредами должна пройти
         response = self.client.post('/token/', {
@@ -48,7 +55,7 @@ class PasswordRecovery(APITestCase):
             "email": 'username@example.com',
             "password": 'password'
         }, format='json')
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_passwords_equality(self):
         # Новый пароль совпадает с подтверждением пароля

@@ -25,7 +25,7 @@ class TestAuthentication(APITestCase):
         # then: пользователь авторизован
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         # and: ответ содержит оба токена
-        payload = response.json()
+        payload = response.data
         self.assertTrue('access' in payload and 'refresh' in payload)
 
         # when: пользователь рефрешит токен
@@ -42,11 +42,11 @@ class TestAuthentication(APITestCase):
             "password": 'wrong_password'
         }, format='json')
         # then: пользователь не авторизован
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_logout(self):
         # setup:
-        tokens = self._auth_user().json()
+        tokens = self._auth_user().data
         self.client.credentials(
             HTTP_AUTHORIZATION=f'Bearer {tokens["access"]}')
         # when: пользователь заносит refresh токен в черный список
