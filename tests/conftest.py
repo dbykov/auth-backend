@@ -58,21 +58,22 @@ def pytest_configure():
             'django.contrib.auth.hashers.CryptPasswordHasher',
         ),
         AUTH_USER_MODEL='tests.TestUser',
+        AUTHENTICATION_BACKENDS=['django.contrib.auth.backends.AllowAllUsersModelBackend'],  # noqa: E501
         AUTH_PASSWORD_VALIDATORS=[
             {
-                'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',  # NOQA
+                'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',  # noqa: E501
             },
             {
-                'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',  # NOQA
+                'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',  # noqa: E501
                 'OPTIONS': {
                     'min_length': 10,
                 }
             },
             {
-                'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',  # NOQA
+                'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',  # noqa: E501
             },
             {
-                'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',  # NOQA
+                'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',  # noqa: E501
             },
         ],
         REST_FRAMEWORK={
