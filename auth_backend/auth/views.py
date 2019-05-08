@@ -9,6 +9,7 @@ from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 
+from auth_backend.auth.serializers import TokenObtainSerializer
 from .serializers import RefreshTokenSerializer
 
 
@@ -42,6 +43,7 @@ class TokenObtainView(TokenObtainPairView):
     Получение пары access и refresh токенов
     """
     permission_classes = (AllowAny,)
+    serializer_class = TokenObtainSerializer
 
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)

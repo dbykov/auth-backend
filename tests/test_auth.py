@@ -72,6 +72,18 @@ class TestAuthentication(APITestCase):
         user.refresh_from_db()
         self.assertIsNotNone(user.last_login)
 
+    def test_inactive_user(self):
+        # setup:
+        self.user.is_active = False
+        self.user.save()
+
+        # when:
+        response = self._auth_user()
+
+        # then:
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.data["detail"].code, "inactive_account")
+
     def _auth_user(self) -> Response:
         return self.client.post('/token/', {
             "email": 'username@example.com',
