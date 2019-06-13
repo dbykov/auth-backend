@@ -1,13 +1,11 @@
 import operator
 
 from rest_framework import views, viewsets
-from rest_framework.exceptions import ValidationError
 from rest_framework.request import Request
 from rest_framework.response import Response
 
 from auth_backend.permission.utils import PermissionRegistry
 from auth_backend.role.models import Role
-from auth_backend.role.utils import READONLY_ROLE_CODES, get_guest_role
 from . import serializers
 
 
@@ -64,19 +62,4 @@ class RolesViewSet(viewsets.ModelViewSet):
     то он будет перемещен в гостевую роль.
     """
     serializer_class = serializers.FullRoleSerializer
-    queryset = Role.objects.all().prefetch_related('permissions').exclude(
-        code__in=READONLY_ROLE_CODES
-    )
-
-    def perform_destroy(self, instance: Role):
-        if instance.code in READONLY_ROLE_CODES:
-            raise ValidationError(code="readOnly")
-
-        # Добавить всем пользователям роль Гость, если удаляемая единственная
-        users = instance.users.all()
-        guest_role = get_guest_role()
-        for user in users:
-            if user.roles.count() == 1:
-                user.roles.add(guest_role)
-
-        super().perform_destroy(instance)
+    queryset = Role.objects.all().prefetch_related('permissions')
