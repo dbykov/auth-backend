@@ -6,7 +6,6 @@ from rest_framework import serializers, exceptions
 from rest_framework.compat import MinLengthValidator, MaxLengthValidator
 from rest_framework.validators import UniqueValidator
 
-from auth_backend.role.validators import ReadOnlyRoleValidator
 from .permission import FlatPermissionSerialzer
 
 __all__ = (
@@ -91,6 +90,3 @@ class FullRoleSerializer(serializers.ModelSerializer):
     class Meta:
         fields = ('id', 'code', 'name', 'permissions')
         model = Role
-        validators = [
-            ReadOnlyRoleValidator()
-        ]
