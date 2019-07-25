@@ -2,8 +2,8 @@ from typing import List
 
 from auth_backend.permission.models import (Permission)
 from auth_backend.role.models import Role
+from django.core.validators import MinLengthValidator, MaxLengthValidator
 from rest_framework import serializers, exceptions
-from rest_framework.compat import MinLengthValidator, MaxLengthValidator
 from rest_framework.validators import UniqueValidator
 
 from .permission import FlatPermissionSerialzer
